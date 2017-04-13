@@ -1,11 +1,13 @@
-#ifndef mainDraw_H__
-#define mainDraw_H__
+#ifndef mainDraw_H_
+#define mainDraw_H_
 
 #include <ngl/Camera.h>
 #include <ngl/Light.h>
 #include <ngl/Vec3.h>
 #include <SDL.h>
-#include "camera.h"
+//#include "camera.h"
+#include "map.h"
+#include <ngl/ShaderLib.h>
 
 class mainDraw
 {
@@ -18,6 +20,9 @@ class mainDraw
     /// @brief dtor used to remove any NGL stuff created
     //----------------------------------------------------------------------------------------------------------------------
     ~mainDraw();
+    //----------------------------------------------------------------------------------------------------------------------
+
+    void setCamera(ngl::ShaderLib *shader);
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief resize our screen and set the camera aspect ratio
     /// @param[in] _w the new width
@@ -42,6 +47,9 @@ class mainDraw
     void lookAround(SDL_Event* _event);
 
   private :
+    ngl::Vec3 eye;
+    ngl::Vec3 look;
+    ngl::Vec3 up;
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief method to load transform data to the shaders
     //----------------------------------------------------------------------------------------------------------------------
@@ -98,6 +106,7 @@ class mainDraw
     /// @brief Our NGL Camera
     //----------------------------------------------------------------------------------------------------------------------    
     ngl::Camera* m_cam;
+    map mainmap;
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief the model position for mouse movement
     //----------------------------------------------------------------------------------------------------------------------

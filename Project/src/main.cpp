@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "mainDraw.h"
+#include "map.h"
 #include <ngl/NGLInit.h>
 
 /// @brief function to quit SDL with error message
@@ -68,6 +69,7 @@ int main(int argc, char * argv[])
     // opengl stuff ext. When this falls out of scope the dtor will be called and cleanup
     // our gl stuff
     mainDraw ngl(rect.w, rect.h);
+
     // resize the ngl to set the screen size and camera stuff
     ngl.resize(rect.w,rect.h);
 
