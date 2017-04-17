@@ -1,18 +1,20 @@
-#include "mainDraw.h"
-#ifndef map_H_
-#define map_H_
+#ifndef MAP_H_
+#define MAP_H_
+#include <ngl/Camera.h>
 
-class map: public mainDraw
+class map
 {
     private:
+        ngl::Camera* m_cam;
 
     public:
-        map();
+        map(ngl::Camera* _cam);
         ~map();
         void loadMap();
-        void updateMap();
         void flipMap();
+        void updateMap();
+        void draw();
 
 };
 
-#endif map_H_
+#endif // MAP_H_

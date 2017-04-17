@@ -68,10 +68,12 @@ int main(int argc, char * argv[])
     // now we create an instance of our ngl class, this will init NGL and setup basic
     // opengl stuff ext. When this falls out of scope the dtor will be called and cleanup
     // our gl stuff
-    mainDraw ngl(rect.w, rect.h);
+//    mainDraw ngl();
+
+    mainDraw* scene = new mainDraw();
 
     // resize the ngl to set the screen size and camera stuff
-    ngl.resize(rect.w,rect.h);
+    scene->resize(rect.w,rect.h);
 
     //SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -102,13 +104,13 @@ int main(int argc, char * argv[])
         }
 
         //EVENT HANDLING
-        ngl.handleEvent(&event);
+        scene->handleEvent(&event);
 
         //UPDATE HANDLING
-        ngl.updateEvent();
+        scene->updateEvent();
 
         //DRAW HANDLING
-        ngl.draw();
+        scene->draw();
 
         // swap the buffers and shit on my kangaroo boss
         SDL_GL_SwapWindow(window);
