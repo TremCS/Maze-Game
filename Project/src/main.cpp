@@ -75,7 +75,7 @@ int main(int argc, char * argv[])
     // resize the ngl to set the screen size and camera stuff
     scene->resize(rect.w,rect.h);
 
-    //SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     //GAME LOOP
     while(!quit)
@@ -104,7 +104,7 @@ int main(int argc, char * argv[])
         }
 
         //EVENT HANDLING
-        scene->handleEvent(&event);
+        scene->handleEvent(&event, rect.w, rect.h);
 
         //UPDATE HANDLING
         scene->updateEvent();

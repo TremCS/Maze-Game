@@ -4,6 +4,7 @@
 #include <ngl/Material.h>
 #include <ngl/Transformation.h>
 #include <ngl/VAOPrimitives.h>
+#include <math.h>
 
 const static float INCREMENT=0.01;
 const static float ZOOM=0.05;
@@ -68,8 +69,10 @@ mainDraw::mainDraw()
 void mainDraw::setCamera()
 {
     // FIRST PERSON CAMERA
-    eye=ngl::Vec3(1.0f,1.0f,1.0f);
-    look=ngl::Vec3(0.0f,0.0f,0.0f);
+    eye=ngl::Vec3(1.0f,1.0f,1.0f);  //this will be the player position
+    aim = ngl::Vec3(0.0f,0.0f,1.0f);
+    right=ngl::Vec3(0.0f,0.0f,0.0f);
+    look=eye+aim; //this is the player position + the direction they're looking in
     up=ngl::Vec3(0.0f,1.0f,0.0f);
 
     m_cam= new ngl::Camera();
@@ -84,39 +87,85 @@ mainDraw::~mainDraw()
     std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
     delete m_light;
     delete m_cam;
+    //delete m_mainmap;
 }
 
 void mainDraw::resize(int _w, int _h)
 {
     glViewport(0,0,_w,_h);
     // now set the camera size values as the screen size has changed
-    m_cam->setShape(45,(float)_w/_h,0.05,350);
+    m_cam->setShape(90,(float)_w/_h,0.05,350);
 }
 
-void mainDraw::handleEvent(SDL_Event* _event)
+void mainDraw::handleEvent(SDL_Event* _event, int _w, int _h)
 {
     std::cout<<"handle event\n";
 
 
 
-//    if(_event->type == SDL_MOUSEMOTION){lookAround(_event);}
+    if(_event->type == SDL_MOUSEMOTION){lookAround(_event, _w, _h);}
 
 
 }
 
-void mainDraw::lookAround(SDL_Event *_event)
+void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
 {
 
-    std::cout<<m_rotation.m_x;
-    m_rotation.m_x = _event->motion.x;
-    m_rotation.m_y = _event->motion.y;
+    //std::cout<<x_orig;
+    m_origX = _w/4;
+    m_origY = _h/4;
 
 
+    x_del += 0.0001*(m_origX-_event->motion.x);
+    y_del += 0.0001*(m_origY-_event->motion.y);
 
-    //std::cout<<m_rotation.m_x;
-    m_cam->yaw(m_rotation.m_x);
-    m_cam->pitch(m_rotation.m_y);
-    std::cout<<"looking\n";
+    std::cout<<x_del<<' '<<y_del<<'\n';
+
+
+//    std::cout<<_event->motion.xrel;
+//    m_cam->yaw(m_rotation.m_x);
+//    m_cam->normalisedPitch(m_rotation.m_y);
+//    std::cout<<"looking\n";
+
+//    aim = ngl::Vec3(0.0,0.0,0.0);
+
+    //ang_x = x_del;
+    //ang_z = x_del;
+    //ang_y = y_del;
+
+    ang_x = sin(y_del)*sin(x_del);
+    ang_y = sin(y_del);
+    ang_z = cos(y_del)*cos(x_del);
+
+    //std::cout<<ang_x;
+
+//    aim.m_x -= ang_x;
+//    aim.m_z += ang_y;
+//    aim.m_y -= ang_z;
+
+
+    aim.m_x = ang_x;
+    aim.m_z = ang_z;
+    aim.m_y = ang_y;
+
+//    right.m_x = sin(x_del - (3.14/2));
+//    right.m_z = cos(x_del - (3.14/2));
+
+    //up = ngl::Vec3.cross(right, aim);
+
+    //up.cross(right, aim);
+
+    //std::cout<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
+
+    look=eye+aim; //this is the player position + the direction they're looking in
+
+    m_cam->set(eye, look, up);
+
+    m_xLast = x_del;
+    m_yLast = y_del;
+
+    _event->motion.x = m_origX;
+    _event->motion.y = m_origY;
 
 }
 
@@ -124,7 +173,6 @@ void mainDraw::lookAround(SDL_Event *_event)
 void mainDraw::updateEvent()
 {
     std::cout<<"update event\n";
-//    m_cam->update();
     m_mainmap->updateMap();
 }
 
