@@ -51,6 +51,8 @@ mainDraw::mainDraw()
         m.loadToShader("material");
 
         setCamera();
+        m_xLast = 0;
+        m_yLast = 0;
 
         // now create our light this is done after the camera so we can pass the
         // transpose of the projection matrix to the light to do correct eye space
@@ -69,7 +71,7 @@ mainDraw::mainDraw()
 void mainDraw::setCamera()
 {
     // FIRST PERSON CAMERA
-    eye=ngl::Vec3(1.0f,1.0f,1.0f);  //this will be the player position
+    eye=ngl::Vec3(1.0f,1.0f,0.0f);  //this will be the player position
     aim = ngl::Vec3(0.0f,0.0f,1.0f);
     right=ngl::Vec3(0.0f,0.0f,0.0f);
     look=eye+aim; //this is the player position + the direction they're looking in
@@ -115,11 +117,36 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
     m_origX = _w/4;
     m_origY = _h/4;
 
+    if(m_xLast != _event->motion.x)
+    {
+        if(m_xLast > _event->motion.x)
+        {
+            x_del -= 0.0001*(_event->motion.x-m_origX);
+            m_xLast = _event->motion.x;
+        }
+        else
+        {
+            x_del += 0.0001*(_event->motion.x-m_origX);
+            m_xLast = _event->motion.x;
+        }
+    }
 
-    x_del += 0.0001*(m_origX-_event->motion.x);
-    y_del += 0.0001*(m_origY-_event->motion.y);
+    if(m_yLast != _event->motion.y)
+    {
+//        if(m_yLast > _event->motion.y)
+//        {
+//            y_del -= 0.0001*(_event->motion.y-m_origY);
+//            m_yLast = _event->motion.y;
+//        }
+//        else
+//        {
+            y_del += 0.0001*(_event->motion.y-m_origY);
+            m_yLast = _event->motion.y;
+//        }
+    }
 
-    std::cout<<x_del<<' '<<y_del<<'\n';
+
+//    std::cout<<x_del<<' '<<y_del<<'\n';
 
 
 //    std::cout<<_event->motion.xrel;
@@ -133,9 +160,9 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
     //ang_z = x_del;
     //ang_y = y_del;
 
-    ang_x = sin(y_del)*sin(x_del);
+    ang_x = sin(x_del);
     ang_y = sin(y_del);
-    ang_z = cos(y_del)*cos(x_del);
+    ang_z = -cos(y_del);
 
     //std::cout<<ang_x;
 
@@ -148,6 +175,9 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
     aim.m_z = ang_z;
     aim.m_y = ang_y;
 
+//    if(aim.m_y > 1){aim.m_y = 1;}
+//    if(aim.m_y < -1) {aim.m_y = -1;}
+
 //    right.m_x = sin(x_del - (3.14/2));
 //    right.m_z = cos(x_del - (3.14/2));
 
@@ -155,17 +185,14 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
 
     //up.cross(right, aim);
 
-    //std::cout<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
+//    std::cout<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
 
     look=eye+aim; //this is the player position + the direction they're looking in
-
+    std::cout<<look.m_x<<", "<<look.m_y<<", "<<look.m_z<<"\n";
     m_cam->set(eye, look, up);
 
-    m_xLast = x_del;
-    m_yLast = y_del;
-
-    _event->motion.x = m_origX;
-    _event->motion.y = m_origY;
+//    _event->motion.x = m_origX;
+//    _event->motion.y = m_origY;
 
 }
 
