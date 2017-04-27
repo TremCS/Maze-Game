@@ -56,6 +56,9 @@ class mainDraw
     double ang_x;
     double ang_y;
     double ang_z;
+    double ang_theta;
+    double ang_phi;
+    double len_r;
     double x_del;
     double y_del;
     double x_orig;
