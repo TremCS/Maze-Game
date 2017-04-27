@@ -148,22 +148,21 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
 
 //    std::cout<<x_del<<' '<<y_del<<'\n';
 
-    //Angle Theta
-    ang_theta = acos(x_del / (sqrt(x_del*x_del + y_del*y_del) ));
 
-    //Length r
-    len_r = sqrt(x_del*x_del + y_del*y_del + aim.m_z*aim.m_z);
-
-    //Angle Phi
-    ang_phi = acos (aim.m_z / ang_x);
-
-    std::cout<<len_r<<", "<<ang_phi<<", "<<ang_theta<<"\n";
+//    std::cout<<_event->motion.xrel;
+//    m_cam->yaw(m_rotation.m_x);
+//    m_cam->normalisedPitch(m_rotation.m_y);
+//    std::cout<<"looking\n";
 
 //    aim = ngl::Vec3(0.0,0.0,0.0);
 
-    ang_x = len_r * sin(ang_phi) * cos(ang_theta);
-    ang_y = len_r * sin(ang_phi) * sin(ang_theta);
-    ang_z = len_r * cos(ang_phi);
+    //ang_x = x_del;
+    //ang_z = x_del;
+    //ang_y = y_del;
+
+    ang_x = cos(x_del)*cos(y_del);
+    ang_y = sin(y_del);
+    ang_z = sin(x_del)*cos(y_del);
 
     //std::cout<<ang_x;
 
@@ -175,6 +174,8 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
     aim.m_x = ang_x;
     aim.m_z = ang_z;
     aim.m_y = ang_y;
+
+    aim = ngl::Vec3::normalize(aim);
 
 //    if(aim.m_y > 1){aim.m_y = 1;}
 //    if(aim.m_y < -1) {aim.m_y = -1;}
@@ -189,7 +190,7 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
 //    std::cout<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
 
     look=eye+aim; //this is the player position + the direction they're looking in
-//    std::cout<<look.m_x<<", "<<look.m_y<<", "<<look.m_z<<"\n";
+    std::cout<<look.m_x<<", "<<look.m_y<<", "<<look.m_z<<"\n";
     m_cam->set(eye, look, up);
 
 //    _event->motion.x = m_origX;
