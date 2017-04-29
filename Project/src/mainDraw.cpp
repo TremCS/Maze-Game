@@ -8,7 +8,7 @@
 
 const static float INCREMENT=0.01;
 const static float ZOOM=0.05;
-mainDraw::mainDraw()
+mainDraw::mainDraw(int _w, int _h)
 {
         m_rotation=(0.0f);
 
@@ -51,8 +51,10 @@ mainDraw::mainDraw()
         m.loadToShader("material");
 
         setCamera();
-        m_xLast = 0;
-        m_yLast = 0;
+        m_xLast = _w;
+        m_yLast = _h;
+        m_origX = _w/4;
+        m_origY = _h/4;
 
         // now create our light this is done after the camera so we can pass the
         // transpose of the projection matrix to the light to do correct eye space
@@ -113,36 +115,20 @@ void mainDraw::handleEvent(SDL_Event* _event, int _w, int _h)
 void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
 {
 
-    //std::cout<<x_orig;
-    m_origX = _w/4;
-    m_origY = _h/4;
-
     if(m_xLast != _event->motion.x)
     {
-        if(m_xLast > _event->motion.x)
-        {
-            x_del -= 0.0001*(_event->motion.x-m_origX);
-            m_xLast = _event->motion.x;
-        }
-        else
-        {
-            x_del += 0.0001*(_event->motion.x-m_origX);
-            m_xLast = _event->motion.x;
-        }
+
+        x_del += 0.001*(_event->motion.x-m_xLast);
+        m_xLast = _event->motion.x;
+
     }
 
     if(m_yLast != _event->motion.y)
     {
-        if(m_yLast > _event->motion.y)
-        {
-            y_del -= 0.0001*(_event->motion.y-m_origY);
-            m_yLast = _event->motion.y;
-        }
-        else
-        {
-            y_del += 0.0001*(_event->motion.y-m_origY);
-            m_yLast = _event->motion.y;
-        }
+
+        y_del += 0.0001*(m_yLast-_event->motion.y);
+        m_yLast = _event->motion.y;
+
     }
 
 
@@ -175,7 +161,7 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
     aim.m_z = ang_z;
     aim.m_y = ang_y;
 
-    aim = ngl::Vec3::normalize(aim);
+    //aim = ngl::Vec3::normalize(aim);
 
 //    if(aim.m_y > 1){aim.m_y = 1;}
 //    if(aim.m_y < -1) {aim.m_y = -1;}

@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
     // our gl stuff
 //    mainDraw ngl();
 
-    mainDraw* scene = new mainDraw();
+    mainDraw* scene = new mainDraw(rect.w, rect.h);
 
     // resize the ngl to set the screen size and camera stuff
     scene->resize(rect.w,rect.h);
