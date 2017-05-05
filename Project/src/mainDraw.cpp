@@ -6,6 +6,9 @@
 #include <ngl/VAOPrimitives.h>
 #include <math.h>
 
+#define PI 3.141593654
+#define TO_RADS PI / 180
+
 const static float INCREMENT=0.01;
 const static float ZOOM=0.05;
 mainDraw::mainDraw(int _w, int _h)
@@ -51,8 +54,8 @@ mainDraw::mainDraw(int _w, int _h)
         m.loadToShader("material");
 
         setCamera();
-        m_xLast = _w;
-        m_yLast = _h;
+        m_xLast = _w/4;
+        m_yLast = _h/4;
         m_origX = _w/4;
         m_origY = _h/4;
 
@@ -73,7 +76,7 @@ mainDraw::mainDraw(int _w, int _h)
 void mainDraw::setCamera()
 {
     // FIRST PERSON CAMERA
-    eye=ngl::Vec3(1.0f,1.0f,0.0f);  //this will be the player position
+    eye=ngl::Vec3(0.0f,1.0f,0.0f);  //this will be the player position
     aim = ngl::Vec3(0.0f,0.0f,1.0f);
     right=ngl::Vec3(0.0f,0.0f,0.0f);
     look=eye+aim; //this is the player position + the direction they're looking in
@@ -118,16 +121,35 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
     if(m_xLast != _event->motion.x)
     {
 
-        x_del += 0.001*(_event->motion.x-m_xLast);
+        x_del += 0.01*(_event->motion.x-m_xLast);
         m_xLast = _event->motion.x;
+
+        if(x_del >= 2*PI)
+        {
+            x_del = x_del-2*PI;
+        }
+
+        if (x_del <= -2*PI)
+        {
+            x_del = x_del +2*PI;
+        }
 
     }
 
     if(m_yLast != _event->motion.y)
     {
-
-        y_del += 0.0001*(m_yLast-_event->motion.y);
+        y_del += 0.01*(m_yLast-_event->motion.y);
         m_yLast = _event->motion.y;
+
+        if(y_del >= 1.57)
+        {
+            y_del = 1.57;
+        }
+
+        if(y_del <= -1.57)
+        {
+            y_del = -1.57;
+        }
 
     }
 
@@ -146,11 +168,16 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
     //ang_z = x_del;
     //ang_y = y_del;
 
+//    x_del = x_del;//*TO_RADS;
+//    y_del = y_del;//*TO_RADS;
+
+//    std::cout<<x_del<<' '<<y_del<<'\n';
+
     ang_x = cos(x_del)*cos(y_del);
     ang_y = sin(y_del);
     ang_z = sin(x_del)*cos(y_del);
 
-    //std::cout<<ang_x;
+//    std::cout<<ang_x;
 
 //    aim.m_x -= ang_x;
 //    aim.m_z += ang_y;
@@ -175,12 +202,10 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
 
 //    std::cout<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
 
+    //ngl::Vec3::normalize(aim);
     look=eye+aim; //this is the player position + the direction they're looking in
     std::cout<<look.m_x<<", "<<look.m_y<<", "<<look.m_z<<"\n";
     m_cam->set(eye, look, up);
-
-//    _event->motion.x = m_origX;
-//    _event->motion.y = m_origY;
 
 }
 
