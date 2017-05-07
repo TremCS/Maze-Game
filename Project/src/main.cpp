@@ -28,13 +28,17 @@ int main(int argc, char * argv[])
 
     // now get the size of the display and create a window we need to init the video
     SDL_Rect rect;
-    SDL_GetDisplayBounds(0,&rect);
+
+    rect.w = 1280;
+    rect.h = 720;
+
+//    SDL_GetDisplayBounds(0,&rect);
     // now create our window
     SDL_Window *window=SDL_CreateWindow("SDLNGL",
                                       SDL_WINDOWPOS_CENTERED,
                                       SDL_WINDOWPOS_CENTERED,
-                                      rect.w/2,
-                                      rect.h/2,
+                                      rect.w,
+                                      rect.h,
                                       SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
                                      );
     // check to see if that worked or exit
@@ -75,7 +79,7 @@ int main(int argc, char * argv[])
     // resize the ngl to set the screen size and camera stuff
     scene->resize(rect.w,rect.h);
 
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_ShowCursor(SDL_DISABLE);
 
     //GAME LOOP
     while(!quit)
@@ -101,10 +105,10 @@ int main(int argc, char * argv[])
                   default : break;
                 }//End of quit loop
 
+        //EVENT HANDLING
+        scene->handleEvent(event, rect.w, rect.h);
         }
 
-        //EVENT HANDLING
-        scene->handleEvent(&event, rect.w, rect.h);
 
         //UPDATE HANDLING
         scene->updateEvent();

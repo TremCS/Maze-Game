@@ -56,4 +56,7 @@ void map::draw()
     shader->setShaderParamFromMat4("M",M);
 
     ngl::VAOPrimitives::instance()->draw("ground");
+
+    ngl::VAOPrimitives::instance()->draw("teapot");
+
 }

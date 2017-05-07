@@ -14,6 +14,7 @@ const static float ZOOM=0.05;
 mainDraw::mainDraw(int _w, int _h)
 {
         m_rotation=(0.0f);
+        m_moving = false;
 
 
         glClearColor(0.4f, 0.4f, 0.4f, 1.0f);			   // Grey Background
@@ -54,10 +55,10 @@ mainDraw::mainDraw(int _w, int _h)
         m.loadToShader("material");
 
         setCamera();
-        m_xLast = _w/4;
-        m_yLast = _h/4;
-        m_origX = _w/4;
-        m_origY = _h/4;
+//        m_xLast = _w/4;
+//        m_yLast = _h/4;
+        m_origX = _w/2;
+        m_origY = _h/2;
 
         // now create our light this is done after the camera so we can pass the
         // transpose of the projection matrix to the light to do correct eye space
@@ -76,7 +77,7 @@ mainDraw::mainDraw(int _w, int _h)
 void mainDraw::setCamera()
 {
     // FIRST PERSON CAMERA
-    eye=ngl::Vec3(0.0f,1.0f,0.0f);  //this will be the player position
+    eye=ngl::Vec3(0.0f,1.0f,-2.0f);  //this will be the player position
     aim = ngl::Vec3(0.0f,0.0f,1.0f);
     right=ngl::Vec3(0.0f,0.0f,0.0f);
     look=eye+aim; //this is the player position + the direction they're looking in
@@ -101,45 +102,25 @@ void mainDraw::resize(int _w, int _h)
 {
     glViewport(0,0,_w,_h);
     // now set the camera size values as the screen size has changed
-    m_cam->setShape(90,(float)_w/_h,0.05,350);
+    m_cam->setShape(60,(float)_w/_h,0.05,350);
 }
 
-void mainDraw::handleEvent(SDL_Event* _event, int _w, int _h)
+void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
 {
-    std::cout<<"handle event\n";
+//    std::cout<<"handle event\n";
 
-
-
-    if(_event->type == SDL_MOUSEMOTION){lookAround(_event, _w, _h);}
-
-
+    lookAround(_event, _w, _h);
+    moveAround(_event);
 }
 
-void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
+void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
 {
-
-    if(m_xLast != _event->motion.x)
+    if(_event.type == SDL_MOUSEMOTION)
     {
+        SDL_WarpMouseInWindow(NULL, m_origX, m_origY);
 
-        x_del += 0.01*(_event->motion.x-m_xLast);
-        m_xLast = _event->motion.x;
-
-        if(x_del >= 2*PI)
-        {
-            x_del = x_del-2*PI;
-        }
-
-        if (x_del <= -2*PI)
-        {
-            x_del = x_del +2*PI;
-        }
-
-    }
-
-    if(m_yLast != _event->motion.y)
-    {
-        y_del += 0.01*(m_yLast-_event->motion.y);
-        m_yLast = _event->motion.y;
+        x_del += (_event.motion.x-m_origX)*0.001;
+        y_del += (_event.motion.y-m_origY)*-0.001;
 
         if(y_del >= 1.57)
         {
@@ -150,69 +131,80 @@ void mainDraw::lookAround(SDL_Event *_event, int _w, int _h)
         {
             y_del = -1.57;
         }
+    //    std::cout<< x_del << ", " << y_del <<"\n";
 
+        ang_x = cos(x_del)*cos(y_del);
+        ang_y = sin(y_del);
+        ang_z = sin(x_del)*cos(y_del);
+
+        aim.m_x = ang_x;
+        aim.m_z = ang_z;
+        aim.m_y = ang_y;
+
+        aim.normalize();
+
+        look=eye+aim; //this is the player position + the direction they're looking in
+        m_cam->set(eye, look, up);
+
+//        std::cout<<"eye: "<<eye.m_x<<", "<<eye.m_y<<", "<<eye.m_z<<"\n";
+//        std::cout<<"aim: "<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
+//        std::cout<<"look: "<<look.m_x<<", "<<look.m_y<<", "<<look.m_z<<"\n";
+//        std::cout<<"-------------------------\n";
+    }
+}
+
+void mainDraw::moveAround(SDL_Event& _event)
+{
+    if(_event.type == SDL_KEYDOWN && _event.key.repeat == 0)
+    {        
+        m_moving = true;
     }
 
+    if(_event.type == SDL_KEYUP  && _event.key.repeat == 0)
+    {
+         m_moving = false;
+    }
 
-//    std::cout<<x_del<<' '<<y_del<<'\n';
+    if(m_moving)
+    {
+        switch(_event.key.keysym.sym)
+        {
+            case SDLK_w:
+                eye.m_x += aim.m_x*0.1;
+                eye.m_z += aim.m_z*0.1;
+                look=eye+aim;
+                m_cam->set(eye, look, up);
+                break;
 
+            case SDLK_s:
+                eye.m_x -= aim.m_x*0.1;
+                eye.m_z -= aim.m_z*0.1;
+                look=eye+aim;
+                m_cam->set(eye, look, up);
+                break;
 
-//    std::cout<<_event->motion.xrel;
-//    m_cam->yaw(m_rotation.m_x);
-//    m_cam->normalisedPitch(m_rotation.m_y);
-//    std::cout<<"looking\n";
+            case SDLK_d:
+                right.cross(aim, up);
+                eye += right*0.1;
+                look=eye+aim;
+                m_cam->set(eye, look, up);
+                break;
 
-//    aim = ngl::Vec3(0.0,0.0,0.0);
-
-    //ang_x = x_del;
-    //ang_z = x_del;
-    //ang_y = y_del;
-
-//    x_del = x_del;//*TO_RADS;
-//    y_del = y_del;//*TO_RADS;
-
-//    std::cout<<x_del<<' '<<y_del<<'\n';
-
-    ang_x = cos(x_del)*cos(y_del);
-    ang_y = sin(y_del);
-    ang_z = sin(x_del)*cos(y_del);
-
-//    std::cout<<ang_x;
-
-//    aim.m_x -= ang_x;
-//    aim.m_z += ang_y;
-//    aim.m_y -= ang_z;
-
-
-    aim.m_x = ang_x;
-    aim.m_z = ang_z;
-    aim.m_y = ang_y;
-
-    //aim = ngl::Vec3::normalize(aim);
-
-//    if(aim.m_y > 1){aim.m_y = 1;}
-//    if(aim.m_y < -1) {aim.m_y = -1;}
-
-//    right.m_x = sin(x_del - (3.14/2));
-//    right.m_z = cos(x_del - (3.14/2));
-
-    //up = ngl::Vec3.cross(right, aim);
-
-    //up.cross(right, aim);
-
-//    std::cout<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
-
-    //ngl::Vec3::normalize(aim);
-    look=eye+aim; //this is the player position + the direction they're looking in
-    std::cout<<look.m_x<<", "<<look.m_y<<", "<<look.m_z<<"\n";
-    m_cam->set(eye, look, up);
+            case SDLK_a:
+                right.cross(aim, up);
+                eye -= right*0.1;
+                look=eye+aim;
+                m_cam->set(eye, look, up);
+                break;
+        }
+        std::cout<<"Move\n";
+    }
 
 }
 
-
 void mainDraw::updateEvent()
 {
-    std::cout<<"update event\n";
+//    std::cout<<"update event\n";
     m_mainmap->updateMap();
 }
 
