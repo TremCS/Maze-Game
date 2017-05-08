@@ -4,6 +4,7 @@
 #include <ngl/Material.h>
 #include <ngl/Transformation.h>
 #include <ngl/VAOPrimitives.h>
+#include <ngl/Image.h>
 #include <math.h>
 
 #define PI 3.141593654
@@ -70,8 +71,8 @@ mainDraw::mainDraw(int _w, int _h)
         // load these values to the shader as well
         m_light->loadToShader("light");
 
-//        map m_mainmap(m_cam);
-        m_mainmap = new map(m_cam);
+        auto fname="maps/Maze.png";
+        m_mainmap = new map(m_cam, fname);
 }
 
 void mainDraw::setCamera()
@@ -122,14 +123,14 @@ void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
         x_del += (_event.motion.x-m_origX)*0.001;
         y_del += (_event.motion.y-m_origY)*-0.001;
 
-        if(y_del >= 1.57)
+        if(y_del >= PI/2)
         {
-            y_del = 1.57;
+            y_del = PI/2;
         }
 
-        if(y_del <= -1.57)
+        if(y_del <= -PI/2)
         {
-            y_del = -1.57;
+            y_del = -PI/2;
         }
     //    std::cout<< x_del << ", " << y_del <<"\n";
 

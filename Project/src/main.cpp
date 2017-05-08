@@ -28,7 +28,6 @@ int main(int argc, char * argv[])
 
     // now get the size of the display and create a window we need to init the video
     SDL_Rect rect;
-
     rect.w = 1280;
     rect.h = 720;
 
