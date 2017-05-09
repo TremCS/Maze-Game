@@ -71,7 +71,7 @@ mainDraw::mainDraw(int _w, int _h)
         // load these values to the shader as well
         m_light->loadToShader("light");
 
-        auto fname="maps/Maze.png";
+        auto fname="maps/Maze2.png";
         m_mainmap = new map(m_cam, fname);
 }
 
@@ -118,25 +118,29 @@ void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
 {
     if(_event.type == SDL_MOUSEMOTION)
     {
+        //Keeps cursor in the centre of the window
         SDL_WarpMouseInWindow(NULL, m_origX, m_origY);
 
+        //Calculates the value between the centre of the window and the cursor each frame
         x_del += (_event.motion.x-m_origX)*0.001;
         y_del += (_event.motion.y-m_origY)*-0.001;
 
-        if(y_del >= PI/2)
+        //Locks the vertical access to -90 < x < 90 (rounded down to stop screen flip at 90
+        if(y_del >= 1.57)
         {
-            y_del = PI/2;
+            y_del = 1.57;
         }
 
-        if(y_del <= -PI/2)
+        if(y_del <= -1.57)
         {
-            y_del = -PI/2;
+            y_del = -1.57;
         }
     //    std::cout<< x_del << ", " << y_del <<"\n";
-
+        //Converting radians to cartesian coordinates
         ang_x = cos(x_del)*cos(y_del);
         ang_y = sin(y_del);
         ang_z = sin(x_del)*cos(y_del);
+
 
         aim.m_x = ang_x;
         aim.m_z = ang_z;
@@ -144,9 +148,11 @@ void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
 
         aim.normalize();
 
+        //Calculating the look vector and setting the camera movement
         look=eye+aim; //this is the player position + the direction they're looking in
         m_cam->set(eye, look, up);
 
+        //print lines for look debugging
 //        std::cout<<"eye: "<<eye.m_x<<", "<<eye.m_y<<", "<<eye.m_z<<"\n";
 //        std::cout<<"aim: "<<aim.m_x<<", "<<aim.m_y<<", "<<aim.m_z<<"\n";
 //        std::cout<<"look: "<<look.m_x<<", "<<look.m_y<<", "<<look.m_z<<"\n";
