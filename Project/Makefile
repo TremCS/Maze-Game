@@ -36,7 +36,7 @@ DISTNAME      = MazeGame1.0.0
 DISTDIR = /home/i7425951/CA1/Project/obj/MazeGame1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-z,origin -Wl,-rpath,\$$ORIGIN/L/home/i7425951/NGL/lib -Wl,-rpath,/home/i7425951/NGL/lib -Wl,-rpath,/opt/Qt5.7.0/5.7/gcc_64/lib
-LIBS          = $(SUBLIBS) -L/usr/local/lib -Wl,-rpath,/usr/local/lib -lSDL2 -L/home/i7425951/NGL/lib -l NGL -ltiff -L/opt/Qt5.7.0/5.7/gcc_64/lib -lQt5OpenGL -L/usr/lib64 -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread 
+LIBS          = $(SUBLIBS) -L/usr/local/lib -Wl,-rpath,/usr/local/lib -lSDL2 -lSDL2_ttf -L/home/i7425951/NGL/lib -l NGL -ltiff -L/opt/Qt5.7.0/5.7/gcc_64/lib -lQt5OpenGL -L/usr/lib64 -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread 
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -48,21 +48,21 @@ OBJECTS_DIR   = obj/
 
 ####### Files
 
-SOURCES       = src/camera.cpp \
-		src/main.cpp \
+SOURCES       = src/main.cpp \
 		src/mainDraw.cpp \
-		src/map.cpp 
-OBJECTS       = obj/camera.o \
-		obj/main.o \
+		src/map.cpp \
+		src/menu.cpp 
+OBJECTS       = obj/main.o \
 		obj/mainDraw.o \
-		obj/map.o
+		obj/map.o \
+		obj/menu.o
 DIST          = .qmake.stash \
-		MazeGame.pro include/camera.h \
-		include/mainDraw.h \
-		include/map.h src/camera.cpp \
-		src/main.cpp \
+		MazeGame.pro include/mainDraw.h \
+		include/map.h \
+		include/menu.h src/main.cpp \
 		src/mainDraw.cpp \
-		src/map.cpp
+		src/map.cpp \
+		src/menu.cpp
 QMAKE_TARGET  = MazeGame
 DESTDIR       = 
 TARGET        = MazeGame
@@ -409,8 +409,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents include/camera.h include/mainDraw.h include/map.h $(DISTDIR)/
-	$(COPY_FILE) --parents src/camera.cpp src/main.cpp src/mainDraw.cpp src/map.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents include/mainDraw.h include/map.h include/menu.h $(DISTDIR)/
+	$(COPY_FILE) --parents src/main.cpp src/mainDraw.cpp src/map.cpp src/menu.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -451,9 +451,6 @@ compiler_lex_clean:
 compiler_clean: 
 
 ####### Compile
-
-obj/camera.o: src/camera.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/camera.o src/camera.cpp
 
 obj/main.o: src/main.cpp include/mainDraw.h \
 		/home/i7425951/NGL/include/ngl/Camera.h \
@@ -871,6 +868,9 @@ obj/map.o: src/map.cpp include/map.h \
 		/home/i7425951/NGL/include/ngl/Transformation.h \
 		/home/i7425951/NGL/include/ngl/NGLassert.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/map.o src/map.cpp
+
+obj/menu.o: src/menu.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/menu.o src/menu.cpp
 
 ####### Install
 

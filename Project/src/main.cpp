@@ -4,6 +4,7 @@
 #include "mainDraw.h"
 #include "map.h"
 #include <ngl/NGLInit.h>
+#include <SDL_ttf.h>
 
 /// @brief function to quit SDL with error message
 /// @param[in] _msg the error message to send
@@ -12,7 +13,7 @@ void SDLErrorExit(const std::string &_msg);
 /// @brief initialize SDL OpenGL context
 SDL_GLContext createOpenGLContext( SDL_Window *window);
 
-
+int mainMenu();
 
 int main(int argc, char * argv[])
 {
@@ -31,7 +32,9 @@ int main(int argc, char * argv[])
     rect.w = 1280;
     rect.h = 720;
 
-//    SDL_GetDisplayBounds(0,&rect);
+    bool quit=false;
+    int menuQuit = 0;
+
     // now create our window
     SDL_Window *window=SDL_CreateWindow("SDLNGL",
                                       SDL_WINDOWPOS_CENTERED,
@@ -61,11 +64,19 @@ int main(int argc, char * argv[])
     // be done once we have a valid GL context but before we call any GL commands. If we dont do
     // this everything will crash
     ngl::NGLInit::instance();
+
+    menuQuit = mainMenu();
+
+    if(menuQuit == 1)
+    {
+        quit = true;
+    }
+
     // now clear the screen and swap whilst NGL inits (which may take time)
     glClear(GL_COLOR_BUFFER_BIT);
     SDL_GL_SwapWindow(window);
     // flag to indicate if we need to exit
-    bool quit=false;
+
     // sdl event processing data structure
     SDL_Event event;
     // now we create an instance of our ngl class, this will init NGL and setup basic
@@ -78,7 +89,7 @@ int main(int argc, char * argv[])
     // resize the ngl to set the screen size and camera stuff
     scene->resize(rect.w,rect.h);
 
-    SDL_ShowCursor(SDL_DISABLE);
+//    SDL_ShowCursor(SDL_DISABLE);
 
     //GAME LOOP
     while(!quit)
@@ -170,4 +181,58 @@ void SDLErrorExit(const std::string &_msg)
   std::cerr<<SDL_GetError()<<"\n";
   SDL_Quit();
   exit(EXIT_FAILURE);
+}
+
+int mainMenu()
+{
+    int menuDecision = 0;
+    bool quit = 0;
+    SDL_Event event;
+    TTF_Init();
+    SDL_Renderer *renderer;
+    SDL_Color textColor = {255, 255, 255};
+    SDL_Rect PlayRect = {640, 100, 100, 30};
+
+    TTF_Font *font = NULL;
+    font = TTF_OpenFont( "16_true_type_fonts/lazy.ttf", 28 );
+
+    SDL_Surface *PlaySurface = TTF_RenderText_Solid(font, "Play", textColor);
+    SDL_Texture *mTexture = SDL_CreateTextureFromSurface( renderer, PlaySurface );
+
+    SDL_RenderCopy(renderer, mTexture, NULL, &PlayRect);
+
+    while(!quit)
+    {
+        while ( SDL_PollEvent(&event) )
+        {
+                //Quit loop kept separate from every other handler
+                switch (event.type)
+                {
+                    //Exit button click
+                      case SDL_QUIT : quit = true; menuDecision = 1; break;
+
+                      case SDL_KEYDOWN:
+                      {
+                          switch( event.key.keysym.sym )
+                          {
+                              //Escape key press
+                              case SDLK_ESCAPE :  quit = true; menuDecision = 1; break;
+                              default : break;
+                          } // End of key process
+                      } // End of keydown
+
+                      case SDL_MOUSEBUTTONDOWN:
+                      {
+                            switch(event.button.button)
+                            {
+                                case SDL_BUTTON_LEFT:  quit = true; menuDecision = 2; break;
+                            }
+                      }
+                  default : break;
+                }//End of quit loop
+
+        }
+
+    }
+    return menuDecision;
 }
