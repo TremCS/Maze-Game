@@ -16,6 +16,10 @@ mainDraw::mainDraw(int _w, int _h)
 {
         m_rotation=(0.0f);
         m_moving = false;
+        collision_fwd = 0;
+        collision_bkwd = 0;
+        collision_lft = 0;
+        collision_rgt = 0;
 
 
         glClearColor(0.4f, 0.4f, 0.4f, 1.0f);			   // Grey Background
@@ -71,7 +75,7 @@ mainDraw::mainDraw(int _w, int _h)
         // load these values to the shader as well
         m_light->loadToShader("light");
 
-        auto fname="maps/Maze2.png";
+        auto fname="maps/Maze3.png";
         m_mainmap = new map(m_cam, fname);
 }
 
@@ -163,48 +167,69 @@ void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
 void mainDraw::moveAround(SDL_Event& _event)
 {
     if(_event.type == SDL_KEYDOWN && _event.key.repeat == 0)
-    {        
+    {
         m_moving = true;
     }
 
     if(_event.type == SDL_KEYUP  && _event.key.repeat == 0)
     {
-         m_moving = false;
+        m_moving = false;
     }
 
     if(m_moving)
     {
+
+
         switch(_event.key.keysym.sym)
         {
-            case SDLK_w:
-                eye.m_x += aim.m_x*0.1;
-                eye.m_z += aim.m_z*0.1;
-                look=eye+aim;
-                m_cam->set(eye, look, up);
-                break;
+        case SDLK_w:
+                collision_fwd = m_mainmap->collision(eye.m_x, eye.m_z);
+                if(!collision_fwd)
+                {
+                    eye.m_x += aim.m_x*0.1;
+                    eye.m_z += aim.m_z*0.1;
+                    look=eye+aim;
+                    m_cam->set(eye, look, up);
+                    break;
+                }
 
-            case SDLK_s:
+
+        case SDLK_s:
+            collision_bkwd = m_mainmap->collision(eye.m_x, eye.m_z);
+            if(!collision_bkwd)
+            {
                 eye.m_x -= aim.m_x*0.1;
                 eye.m_z -= aim.m_z*0.1;
                 look=eye+aim;
                 m_cam->set(eye, look, up);
                 break;
+            }
 
-            case SDLK_d:
+        case SDLK_d:
+            collision_rgt = m_mainmap->collision(eye.m_x, eye.m_z);
+            if(!collision_rgt)
+            {
                 right.cross(aim, up);
                 eye += right*0.1;
                 look=eye+aim;
                 m_cam->set(eye, look, up);
                 break;
+            }
 
-            case SDLK_a:
+        case SDLK_a:
+            collision_lft = m_mainmap->collision(eye.m_x, eye.m_z);
+            if(!collision_lft)
+            {
                 right.cross(aim, up);
                 eye -= right*0.1;
                 look=eye+aim;
                 m_cam->set(eye, look, up);
                 break;
+            }
+
         }
         std::cout<<"Move\n";
+
     }
 
 }

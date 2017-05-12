@@ -13,21 +13,22 @@ void SDLErrorExit(const std::string &_msg);
 /// @brief initialize SDL OpenGL context
 SDL_GLContext createOpenGLContext( SDL_Window *window);
 
-int mainMenu();
+//int mainMenu(SDL_Renderer *renderer, int _w, int _h);
+
+enum GAMESTATES {MENU = 1, GAME = 2, GAMEOVER = 3, EXIT = 4};
 
 int main(int argc, char * argv[])
 {
     // under windows we must use main with argc / v so jus flag unused for params
     NGL_UNUSED(argc);
     NGL_UNUSED(argv);
-    // Initialize SDL's Video subsystem
-    if (SDL_Init(SDL_INIT_VIDEO) < 0 )
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0 )
     {
         // Or die on error
         SDLErrorExit("Unable to initialize SDL");
     }
 
-    // now get the size of the display and create a window we need to init the video
     SDL_Rect rect;
     rect.w = 1280;
     rect.h = 720;
@@ -49,6 +50,8 @@ int main(int argc, char * argv[])
         SDLErrorExit("Unable to create window");
     }
 
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+
     // Create our opengl context and attach it to our window
 
     SDL_GLContext glContext=createOpenGLContext(window);
@@ -65,12 +68,7 @@ int main(int argc, char * argv[])
     // this everything will crash
     ngl::NGLInit::instance();
 
-    menuQuit = mainMenu();
-
-    if(menuQuit == 1)
-    {
-        quit = true;
-    }
+//    mainMenu(renderer, rect.w, rect.h);
 
     // now clear the screen and swap whilst NGL inits (which may take time)
     glClear(GL_COLOR_BUFFER_BIT);
@@ -82,14 +80,13 @@ int main(int argc, char * argv[])
     // now we create an instance of our ngl class, this will init NGL and setup basic
     // opengl stuff ext. When this falls out of scope the dtor will be called and cleanup
     // our gl stuff
-//    mainDraw ngl();
 
     mainDraw* scene = new mainDraw(rect.w, rect.h);
 
     // resize the ngl to set the screen size and camera stuff
     scene->resize(rect.w,rect.h);
 
-//    SDL_ShowCursor(SDL_DISABLE);
+    SDL_ShowCursor(SDL_DISABLE);
 
     //GAME LOOP
     while(!quit)
@@ -183,56 +180,80 @@ void SDLErrorExit(const std::string &_msg)
   exit(EXIT_FAILURE);
 }
 
-int mainMenu()
-{
-    int menuDecision = 0;
-    bool quit = 0;
-    SDL_Event event;
-    TTF_Init();
-    SDL_Renderer *renderer;
-    SDL_Color textColor = {255, 255, 255};
-    SDL_Rect PlayRect = {640, 100, 100, 30};
+//int mainMenu(SDL_Renderer *renderer, int _w, int _h)
+//{
+//    int menuDecision = 0;
+//    bool quit = 0;
+//    SDL_Event event;
+//    TTF_Init();
 
-    TTF_Font *font = NULL;
-    font = TTF_OpenFont( "16_true_type_fonts/lazy.ttf", 28 );
+////    SDL_Surface *surface = SDL_CreateRGBSurface(0, 300, 100, 32, 0, 0, 0, 0);
+//    //SDL_Surface *surface_2 = SDL_CreateRGBSurface(0, _w, _h, 32, 0, 0, 0, 0);
+//    SDL_RenderClear(renderer);
+////    SDL_Rect BG = {0, 0, _w, _h};
+////    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-    SDL_Surface *PlaySurface = TTF_RenderText_Solid(font, "Play", textColor);
-    SDL_Texture *mTexture = SDL_CreateTextureFromSurface( renderer, PlaySurface );
+////    SDL_RenderFillRect(renderer, &BG);
+////    SDL_RenderDrawRect(renderer, &BG);
 
-    SDL_RenderCopy(renderer, mTexture, NULL, &PlayRect);
+////    SDL_Rect Button = {_w, _h, 300, 100};
+////    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
 
-    while(!quit)
-    {
-        while ( SDL_PollEvent(&event) )
-        {
-                //Quit loop kept separate from every other handler
-                switch (event.type)
-                {
-                    //Exit button click
-                      case SDL_QUIT : quit = true; menuDecision = 1; break;
+////    SDL_RenderFillRect(renderer, &Button);
+////      SDL_RenderDrawRect(renderer, &Button);
 
-                      case SDL_KEYDOWN:
-                      {
-                          switch( event.key.keysym.sym )
-                          {
-                              //Escape key press
-                              case SDLK_ESCAPE :  quit = true; menuDecision = 1; break;
-                              default : break;
-                          } // End of key process
-                      } // End of keydown
 
-                      case SDL_MOUSEBUTTONDOWN:
-                      {
-                            switch(event.button.button)
-                            {
-                                case SDL_BUTTON_LEFT:  quit = true; menuDecision = 2; break;
-                            }
-                      }
-                  default : break;
-                }//End of quit loop
+//    SDL_Rect BG = {0, 0, _w, _h};
+//    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+//    SDL_RenderDrawRect(renderer, &BG);
 
-        }
+////    SDL_BlitSurface(surface_2, NULL, surface, NULL);
 
-    }
-    return menuDecision;
-}
+////    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+////    SDL_Texture *texture_2 = SDL_CreateTextureFromSurface(renderer, surface_2);
+
+
+
+////    SDL_RenderCopy(renderer, texture, NULL, &BG);
+
+////    SDL_RenderCopy(renderer, texture, NULL, NULL);
+
+//    SDL_RenderPresent(renderer);
+
+//    while(!quit)
+//    {
+
+//        while ( SDL_PollEvent(&event) )
+//        {
+//                //Quit loop kept separate from every other handler
+//                switch (event.type)
+//                {
+//                    //Exit button click
+//                      case SDL_QUIT : quit = true; menuDecision = 1; break;
+
+//                      case SDL_KEYDOWN:
+//                      {
+//                          switch( event.key.keysym.sym )
+//                          {
+//                              //Escape key press
+//                              case SDLK_ESCAPE :  quit = true; menuDecision = 1; break;
+//                              default : break;
+//                          } // End of key process
+//                      } // End of keydown
+
+//                      case SDL_MOUSEBUTTONDOWN:
+//                      {
+//                            switch(event.button.button)
+//                            {
+//                                case SDL_BUTTON_LEFT:  quit = true; menuDecision = 2; break;
+//                            }
+//                      }
+//                  default : break;
+//                }//End of quit loop
+//        SDL_RenderPresent(renderer);
+//        std::cout<<"oi";
+//        }
+//    }
+//    TTF_Quit();
+//    return menuDecision;
+//}

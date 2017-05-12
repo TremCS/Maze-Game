@@ -55,6 +55,10 @@ class mainDraw
     ngl::Vec3 up;
 
     bool m_moving;
+    bool collision_fwd;
+    bool collision_bkwd;
+    bool collision_lft;
+    bool collision_rgt;
 
     double ang_x;
     double ang_y;

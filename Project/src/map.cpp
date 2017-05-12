@@ -15,7 +15,7 @@ map::map(ngl::Camera* _cam, const std::string &_fname)
     m_image.reset(new ngl::Image(_fname));
 
     loadMap();
-
+    ngl::Colour pixel(0.0f, 0.0f, 0.0f);
     m_cam = _cam;
 
 }
@@ -68,7 +68,7 @@ void map::draw()
     shader->use(ngl::nglColourShader);
     shader->setUniform("Colour",1.0f,0.0f, 0.0f,1.0f);
 
-    ngl::Colour pixel;
+
 
     auto toFloat=[=](float _r){return _r/255.0f;};
 
@@ -87,8 +87,8 @@ void map::draw()
             if(!FCompare(pixel.m_r,255) || !FCompare(pixel.m_g,255) ||  !FCompare(pixel.m_b,255))
             {
             //std::cout<<m_image->getColour(x,z)<<'\n';
-            tx.setPosition(-x*2,1,z*2);
-            tx.setScale(2, 3, 2);
+            tx.setPosition(-x-0.5,1,z-0.5);
+            tx.setScale(1, 3, 1);
             shader->setUniform("MVP",tx.getMatrix()*
                                m_cam->getVPMatrix());
             shader->setUniform("Colour", toFloat(pixel.m_r), toFloat(pixel.m_g), toFloat(pixel.m_b), 1.0);
@@ -106,4 +106,24 @@ void map::draw()
 
 //    ngl::VAOPrimitives::instance()->draw("teapot");
 
+}
+
+int map::collision(float _x, float _z)
+{
+//    std::cout<<_x<<', '<<_z<<'\n';
+    float halfX = m_image->height()/2;
+    float halfZ = m_image->width()/2;
+//    std::cout<<halfZ<<'\n';
+    GLuint pos_x = (_x)+halfX;
+    GLuint pos_z = (_z)+halfZ;
+    pixel = m_image->getColour(pos_x,pos_z);
+    std::cout<<pos_x;//<<', '<<pos_z<<'\n';
+    if(FCompare(pixel.m_r,0))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }
