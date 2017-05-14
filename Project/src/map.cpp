@@ -8,13 +8,15 @@
 #include <ngl/VAOPrimitives.h>
 #include <ngl/Image.h>
 
-map::map(ngl::Camera* _cam, const std::string &_fname)
+map::map(ngl::Camera* _cam, const std::string &_fname, float _x, float _z)
 {
 
 
     m_image.reset(new ngl::Image(_fname));
 
     loadMap();
+    lastX = _x;
+    lastZ = _z;
     ngl::Colour pixel(0.0f, 0.0f, 0.0f);
     m_cam = _cam;
 
@@ -75,19 +77,19 @@ void map::draw()
     //image mapping
     GLuint imageX=0;
     GLuint imageY=0;
-    float halfZ=m_image->height()/2;
-    float halfX=m_image->width()/2;
+    float halfX = (m_image->height()/2)+0.5;
+    float halfZ = (m_image->width()/2)+0.5;
 
-    for(float z=-halfZ;z<halfZ; ++z)
+    for(float z=-halfZ;z<=halfZ; ++z)
     {
-        for(float x=-halfX; x<halfX; ++x)
+        for(float x=-halfX; x<=halfX; ++x)
         {
             pixel = m_image->getColour(imageX,imageY);
 
             if(!FCompare(pixel.m_r,255) || !FCompare(pixel.m_g,255) ||  !FCompare(pixel.m_b,255))
             {
             //std::cout<<m_image->getColour(x,z)<<'\n';
-            tx.setPosition(-x-0.5,1,z-0.5);
+            tx.setPosition(-x,1,z);
             tx.setScale(1, 3, 1);
             shader->setUniform("MVP",tx.getMatrix()*
                                m_cam->getVPMatrix());
@@ -108,22 +110,173 @@ void map::draw()
 
 }
 
-int map::collision(float _x, float _z)
+/*int map::collision_x(float _x, float _z)
 {
-//    std::cout<<_x<<', '<<_z<<'\n';
-    float halfX = m_image->height()/2;
-    float halfZ = m_image->width()/2;
-//    std::cout<<halfZ<<'\n';
-    GLuint pos_x = (_x)+halfX;
-    GLuint pos_z = (_z)+halfZ;
-    pixel = m_image->getColour(pos_x,pos_z);
-    std::cout<<pos_x;//<<', '<<pos_z<<'\n';
-    if(FCompare(pixel.m_r,0))
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
+    GLuint imageX=0;
+    GLuint imageY=0;
+    float halfX = (m_image->height()/2)+0.5;
+    float halfZ = (m_image->width()/2)+0.5;
+
+    float pos_x = _x;
+    float pos_z = _z;
+
+    int collType = 0;
+
+    std::cout<<halfX<<"\n";
+    for(float z=-halfZ;z<=halfZ; ++z)
+        {
+            for(float x=-halfX; x<=halfX; ++x)
+            {
+                pixel = m_image->getColour(imageX,imageY);
+
+                if(FCompare(pixel.m_r,0))
+                {
+                    if( ((pos_x+0.05) >= (-x-0.1)) && ((pos_x+0.05) <=(-x+0.1)) )
+                    {
+                        //Collision to right of player
+
+                        //if still travelling right
+                        if(pos_x == lastX)
+                        {
+                            collType = 1;
+                        }
+                        lastX = pos_x;
+                        break;
+                    }
+
+                    if(((pos_x-0.05) >= (-x+0.1)) && ((pos_x-0.05) <= (-x-0.1)) )
+                    {
+                        //Collision to left of player
+
+                        //if still travelling left
+                        if(pos_x == lastX)
+                        {
+                            collType = 2;
+                        }
+                        lastX = pos_x;
+                        break;
+                    }
+
+
+                }//end if
+                ++imageX;
+
+            }//end X
+            imageX=0;
+            ++imageY;
+        }//endZ
+
+
+    return collType;
 }
+
+int map::collision_z(float _x, float _z)
+{
+    GLuint imageX=0;
+    GLuint imageY=0;
+    float halfX = (m_image->height()/2)+0.5;
+    float halfZ = (m_image->width()/2)+0.5;
+
+    float pos_x = _x;
+    float pos_z = _z;
+
+    int collType = 0;
+
+    for(float z=-halfZ;z<halfZ; ++z)
+        {
+            ++imageY;
+            for(float x=-halfX; x<halfX; ++x)
+            {
+                ++imageX;
+                pixel = m_image->getColour(imageX,imageY);
+
+                if(FCompare(pixel.m_r,0))
+                {
+
+                    if( ((pos_z+0.05) >= (z-0.1)) && ((pos_z+0.05) <=(z+0.1)) )
+                    {
+                        //Collision above player
+                        collType = 1;
+                        break;
+                    }
+
+                    if(((pos_z-0.05) >= (z+0.1)) && ((pos_z-0.05) <= (z-0.1)) )
+                    {
+                        //Collision below player
+                        collType = 2;
+                        break;
+                    }
+
+                }//end if
+
+
+            }//end X
+            imageX=0;
+
+        }//endZ
+
+
+    return collType;
+}
+*/
+
+bool map::collision(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
+{
+    //Bottom left of image
+    GLuint m_imageX = 0;
+    GLuint m_imageY = 0;
+    float m_halfX = ((float)m_image->height())/2;
+    float m_halfZ = ((float)m_image->width())/2;
+
+    //aim vector resize to map proportions
+    _aim = _aim*_rad;
+    ngl::Vec3 bound = _pos+_aim;
+
+    ngl::Vec2 test = ngl::Vec2(-_pos.m_x,_pos.m_z);
+    auto aimVec = ngl::Vec2(-_aim.m_x,_aim.m_z);
+    aimVec.normalize();
+
+    test += ngl::Vec2(40,40);
+    test += aimVec*ngl::Vec2(_rad,_rad);
+
+    m_imageX=floor(test.m_x);
+    m_imageY=floor(test.m_y);
+    auto px = m_image->getColour(m_imageX,m_imageY);
+
+
+    if(!px.m_r){std::cout<<"can't go there\n";}
+
+    return !px.m_r;
+
+
+    //    test /= ngl::Vec2(2.0,2.0); //since each block is 2 wide?
+
+    std::cout<<"eye: "<<floor(test.m_x)<<", "<<floor(test.m_y)<<"\n";
+
+
+
+
+//    for(float z = -m_halfZ; z <= m_halfZ; z++)
+//    {
+//        for(float x = -m_halfX; x < m_halfX; x++)
+//        {
+//            //find pixel colour of current cell
+//            pixel = m_image->getColour(m_imageX, m_imageZ);
+//            if(bound.m_x <= (x+0.5) && bound.m_x >= (x-0.5))
+//            {
+//                std::cout<<"Collide!\n";
+//            }
+//            else
+//            {
+//                std::cout<<"No Collide!\n";
+//            }
+//            m_imageX++;
+//        }
+//    m_imageX = 0;
+//    m_imageZ++;
+//    }
+//    return 0;
+
+}
+
+

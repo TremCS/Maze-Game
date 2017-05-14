@@ -59,7 +59,7 @@ mainDraw::mainDraw(int _w, int _h)
         // load our material values to the shader into the structure material (see Vertex shader)
         m.loadToShader("material");
 
-        setCamera();
+        setCamera(_w, _h);
 //        m_xLast = _w/4;
 //        m_yLast = _h/4;
         m_origX = _w/2;
@@ -76,13 +76,13 @@ mainDraw::mainDraw(int _w, int _h)
         m_light->loadToShader("light");
 
         auto fname="maps/Maze3.png";
-        m_mainmap = new map(m_cam, fname);
+        m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
 }
 
-void mainDraw::setCamera()
+void mainDraw::setCamera(int _w, int _h)
 {
     // FIRST PERSON CAMERA
-    eye=ngl::Vec3(0.0f,1.0f,-2.0f);  //this will be the player position
+    eye=ngl::Vec3(0.6f,1.0f,-2.0f);  //this will be the player position
     aim = ngl::Vec3(0.0f,0.0f,1.0f);
     right=ngl::Vec3(0.0f,0.0f,0.0f);
     look=eye+aim; //this is the player position + the direction they're looking in
@@ -90,9 +90,8 @@ void mainDraw::setCamera()
 
     m_cam= new ngl::Camera();
     m_cam->set(eye, look, up);
-    // set the shape using FOV 45 Aspect Ratio based on Width and Height
-    // The final two are near and far clipping planes of 0.5 and 10
-    m_cam->setShape(45,(float)720.0/576.0,0.05,350);
+
+    m_cam->setShape(60,(float)_w/_h,0.6,1);
 }
 
 mainDraw::~mainDraw()
@@ -107,7 +106,7 @@ void mainDraw::resize(int _w, int _h)
 {
     glViewport(0,0,_w,_h);
     // now set the camera size values as the screen size has changed
-    m_cam->setShape(60,(float)_w/_h,0.05,350);
+    m_cam->setShape(60,(float)_w/_h,0.55,350);
 }
 
 void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
@@ -174,7 +173,7 @@ void mainDraw::moveAround(SDL_Event& _event)
     if(_event.type == SDL_KEYUP  && _event.key.repeat == 0)
     {
         m_moving = false;
-    }
+    }   
 
     if(m_moving)
     {
@@ -183,31 +182,29 @@ void mainDraw::moveAround(SDL_Event& _event)
         switch(_event.key.keysym.sym)
         {
         case SDLK_w:
-                collision_fwd = m_mainmap->collision(eye.m_x, eye.m_z);
-                if(!collision_fwd)
-                {
-                    eye.m_x += aim.m_x*0.1;
-                    eye.m_z += aim.m_z*0.1;
-                    look=eye+aim;
-                    m_cam->set(eye, look, up);
-                    break;
-                }
+            if(!m_mainmap->collision(eye, aim, 0.5))
+            {
+                eye.m_x += aim.m_x*0.1;
+                eye.m_z += aim.m_z*0.1;
+                look=eye+aim;
+                m_cam->set(eye, look, up);
+            }
+            break;
+
 
 
         case SDLK_s:
-            collision_bkwd = m_mainmap->collision(eye.m_x, eye.m_z);
-            if(!collision_bkwd)
+            if(!m_mainmap->collision(eye, -aim, 0.5))
             {
                 eye.m_x -= aim.m_x*0.1;
                 eye.m_z -= aim.m_z*0.1;
                 look=eye+aim;
                 m_cam->set(eye, look, up);
-                break;
             }
+            break;
 
         case SDLK_d:
-            collision_rgt = m_mainmap->collision(eye.m_x, eye.m_z);
-            if(!collision_rgt)
+            if(!m_mainmap->collision(eye, aim, 0.5))
             {
                 right.cross(aim, up);
                 eye += right*0.1;
@@ -216,9 +213,9 @@ void mainDraw::moveAround(SDL_Event& _event)
                 break;
             }
 
+
         case SDLK_a:
-            collision_lft = m_mainmap->collision(eye.m_x, eye.m_z);
-            if(!collision_lft)
+            if(!m_mainmap->collision(eye, aim, 0.5))
             {
                 right.cross(aim, up);
                 eye -= right*0.1;
@@ -226,12 +223,10 @@ void mainDraw::moveAround(SDL_Event& _event)
                 m_cam->set(eye, look, up);
                 break;
             }
-
         }
-        std::cout<<"Move\n";
+//        std::cout<<"eye: "<<eye.m_x<<", "<<eye.m_y<<", "<<eye.m_z<<"\n";
 
     }
-
 }
 
 void mainDraw::updateEvent()

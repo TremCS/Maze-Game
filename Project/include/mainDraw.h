@@ -22,7 +22,7 @@ class mainDraw
     ~mainDraw();
     //----------------------------------------------------------------------------------------------------------------------
 
-    void setCamera();
+    void setCamera(int _w, int _h);
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief resize our screen and set the camera aspect ratio
     /// @param[in] _w the new width
@@ -55,10 +55,10 @@ class mainDraw
     ngl::Vec3 up;
 
     bool m_moving;
-    bool collision_fwd;
-    bool collision_bkwd;
-    bool collision_lft;
-    bool collision_rgt;
+    int collision_fwd;
+    int collision_bkwd;
+    int collision_lft;
+    int collision_rgt;
 
     double ang_x;
     double ang_y;
