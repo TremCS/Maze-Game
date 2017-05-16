@@ -8,6 +8,10 @@
 //#include "camera.h"
 #include "map.h"
 #include <ngl/ShaderLib.h>
+#include <Text.h>
+
+
+enum GAMESTATES {MENU = 1, GAME = 2, GAMEOVER = 3, EXIT = 4};
 
 class mainDraw
 {
@@ -22,7 +26,7 @@ class mainDraw
     ~mainDraw();
     //----------------------------------------------------------------------------------------------------------------------
 
-    void setCamera(int _w, int _h);
+    void setCamera(ngl::Camera *m_cam, int _w, int _h);
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief resize our screen and set the camera aspect ratio
     /// @param[in] _w the new width
@@ -55,16 +59,26 @@ class mainDraw
     ngl::Vec3 up;
 
     bool m_moving;
-    int collision_fwd;
-    int collision_bkwd;
-    int collision_lft;
-    int collision_rgt;
+    bool spawn;
+
+
+    GAMESTATES m_game;
+    std::unique_ptr<Text> m_text;
+    std::unique_ptr<Text> m_text_small;
 
     double ang_x;
     double ang_y;
     double ang_z;
     double x_del;
     double y_del;
+
+    int min;
+    int sec;
+    int start_time;
+
+    double time;
+
+    ngl::Mat4 iv;
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief method to load transform data to the shaders
     //----------------------------------------------------------------------------------------------------------------------

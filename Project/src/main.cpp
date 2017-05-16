@@ -3,6 +3,7 @@
 #include <iostream>
 #include "mainDraw.h"
 #include "map.h"
+#include "menu.h"
 #include <ngl/NGLInit.h>
 #include <SDL_ttf.h>
 
@@ -13,9 +14,7 @@ void SDLErrorExit(const std::string &_msg);
 /// @brief initialize SDL OpenGL context
 SDL_GLContext createOpenGLContext( SDL_Window *window);
 
-//int mainMenu(SDL_Renderer *renderer, int _w, int _h);
-
-enum GAMESTATES {MENU = 1, GAME = 2, GAMEOVER = 3, EXIT = 4};
+//int mainMenu(int _w, int _h);
 
 int main(int argc, char * argv[])
 {
@@ -34,7 +33,7 @@ int main(int argc, char * argv[])
     rect.h = 720;
 
     bool quit=false;
-    int menuQuit = 0;
+//    int menuQuit = 0;
 
     // now create our window
     SDL_Window *window=SDL_CreateWindow("SDLNGL",
@@ -50,7 +49,8 @@ int main(int argc, char * argv[])
         SDLErrorExit("Unable to create window");
     }
 
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+
+//    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
 
     // Create our opengl context and attach it to our window
 
@@ -68,7 +68,8 @@ int main(int argc, char * argv[])
     // this everything will crash
     ngl::NGLInit::instance();
 
-//    mainMenu(renderer, rect.w, rect.h);
+//    menuQuit = mainMenu(rect.w, rect.h);
+
 
     // now clear the screen and swap whilst NGL inits (which may take time)
     glClear(GL_COLOR_BUFFER_BIT);
@@ -86,11 +87,12 @@ int main(int argc, char * argv[])
     // resize the ngl to set the screen size and camera stuff
     scene->resize(rect.w,rect.h);
 
-    SDL_ShowCursor(SDL_DISABLE);
+
 
     //GAME LOOP
     while(!quit)
     {
+
         while ( SDL_PollEvent(&event) )
         {
                 //Quit loop kept separate from every other handler
@@ -125,9 +127,8 @@ int main(int argc, char * argv[])
 
         // swap the buffers and shit on my kangaroo boss
         SDL_GL_SwapWindow(window);
-
-
     }
+
 
     // now tidy up and exit SDL
     SDL_Quit();
@@ -180,80 +181,3 @@ void SDLErrorExit(const std::string &_msg)
   exit(EXIT_FAILURE);
 }
 
-//int mainMenu(SDL_Renderer *renderer, int _w, int _h)
-//{
-//    int menuDecision = 0;
-//    bool quit = 0;
-//    SDL_Event event;
-//    TTF_Init();
-
-////    SDL_Surface *surface = SDL_CreateRGBSurface(0, 300, 100, 32, 0, 0, 0, 0);
-//    //SDL_Surface *surface_2 = SDL_CreateRGBSurface(0, _w, _h, 32, 0, 0, 0, 0);
-//    SDL_RenderClear(renderer);
-////    SDL_Rect BG = {0, 0, _w, _h};
-////    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-////    SDL_RenderFillRect(renderer, &BG);
-////    SDL_RenderDrawRect(renderer, &BG);
-
-////    SDL_Rect Button = {_w, _h, 300, 100};
-////    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-
-////    SDL_RenderFillRect(renderer, &Button);
-////      SDL_RenderDrawRect(renderer, &Button);
-
-
-//    SDL_Rect BG = {0, 0, _w, _h};
-//    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-//    SDL_RenderDrawRect(renderer, &BG);
-
-////    SDL_BlitSurface(surface_2, NULL, surface, NULL);
-
-////    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-////    SDL_Texture *texture_2 = SDL_CreateTextureFromSurface(renderer, surface_2);
-
-
-
-////    SDL_RenderCopy(renderer, texture, NULL, &BG);
-
-////    SDL_RenderCopy(renderer, texture, NULL, NULL);
-
-//    SDL_RenderPresent(renderer);
-
-//    while(!quit)
-//    {
-
-//        while ( SDL_PollEvent(&event) )
-//        {
-//                //Quit loop kept separate from every other handler
-//                switch (event.type)
-//                {
-//                    //Exit button click
-//                      case SDL_QUIT : quit = true; menuDecision = 1; break;
-
-//                      case SDL_KEYDOWN:
-//                      {
-//                          switch( event.key.keysym.sym )
-//                          {
-//                              //Escape key press
-//                              case SDLK_ESCAPE :  quit = true; menuDecision = 1; break;
-//                              default : break;
-//                          } // End of key process
-//                      } // End of keydown
-
-//                      case SDL_MOUSEBUTTONDOWN:
-//                      {
-//                            switch(event.button.button)
-//                            {
-//                                case SDL_BUTTON_LEFT:  quit = true; menuDecision = 2; break;
-//                            }
-//                      }
-//                  default : break;
-//                }//End of quit loop
-//        SDL_RenderPresent(renderer);
-//        std::cout<<"oi";
-//        }
-//    }
-//    TTF_Quit();
-//    return menuDecision;
-//}

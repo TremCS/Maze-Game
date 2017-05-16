@@ -3,16 +3,20 @@
 #include <ngl/Camera.h>
 #include <ngl/Image.h>
 #include <SDL_ttf.h>
+#include <Text.h>
 
 
 class menu
 {
     private:
 
+
     public:
         menu();
         ~menu();
-        load();
+        void mainMenu();
+        void gameOver();
+        void gameWin();
 
 };
 

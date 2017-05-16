@@ -6,21 +6,17 @@
 #include <ngl/VAOPrimitives.h>
 #include <ngl/Image.h>
 #include <math.h>
+#include <Text.h>
 
 #define PI 3.141593654
 #define TO_RADS PI / 180
 
-const static float INCREMENT=0.01;
-const static float ZOOM=0.05;
 mainDraw::mainDraw(int _w, int _h)
 {
         m_rotation=(0.0f);
         m_moving = false;
-        collision_fwd = 0;
-        collision_bkwd = 0;
-        collision_lft = 0;
-        collision_rgt = 0;
-
+        spawn = false;
+        start_time = 0;
 
         glClearColor(0.4f, 0.4f, 0.4f, 1.0f);			   // Grey Background
         // enable depth testing for drawing
@@ -59,7 +55,12 @@ mainDraw::mainDraw(int _w, int _h)
         // load our material values to the shader into the structure material (see Vertex shader)
         m.loadToShader("material");
 
-        setCamera(_w, _h);
+        m_text.reset(new Text("fonts/arial.ttf", 100));
+        m_text->setColour(1.0,0.0,0.0);
+
+        m_text_small.reset(new Text("fonts/arial.ttf", 30));
+        m_text_small->setColour(1.0,0.0,0.0);
+
 //        m_xLast = _w/4;
 //        m_yLast = _h/4;
         m_origX = _w/2;
@@ -68,30 +69,21 @@ mainDraw::mainDraw(int _w, int _h)
         // now create our light this is done after the camera so we can pass the
         // transpose of the projection matrix to the light to do correct eye space
         // transformations
+
+
+
+        m_game = MENU;
+        m_cam= new ngl::Camera();
+        auto fname=std::string("maps/Maze.png");
+        m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
+        setCamera(m_cam, _w, _h);
+
         ngl::Mat4 iv=m_cam->getViewMatrix();
         iv.transpose();
         m_light = new ngl::Light(ngl::Vec3(-2,5,2),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
         m_light->setTransform(iv);
         // load these values to the shader as well
         m_light->loadToShader("light");
-
-        auto fname="maps/Maze3.png";
-        m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
-}
-
-void mainDraw::setCamera(int _w, int _h)
-{
-    // FIRST PERSON CAMERA
-    eye=ngl::Vec3(0.6f,1.0f,-2.0f);  //this will be the player position
-    aim = ngl::Vec3(0.0f,0.0f,1.0f);
-    right=ngl::Vec3(0.0f,0.0f,0.0f);
-    look=eye+aim; //this is the player position + the direction they're looking in
-    up=ngl::Vec3(0.0f,1.0f,0.0f);
-
-    m_cam= new ngl::Camera();
-    m_cam->set(eye, look, up);
-
-    m_cam->setShape(60,(float)_w/_h,0.6,1);
 }
 
 mainDraw::~mainDraw()
@@ -102,19 +94,55 @@ mainDraw::~mainDraw()
     //delete m_mainmap;
 }
 
+void mainDraw::setCamera(ngl::Camera *m_cam, int _w, int _h)
+{
+    // FIRST PERSON CAMERA
+    eye= ngl::Vec3(-36.5f, 1.0f, 36.5f);//m_mainmap->spawnPos();  //this will be the player position
+    aim = ngl::Vec3(0.0f,0.0f,1.0f);
+    right=ngl::Vec3(0.0f,0.0f,0.0f);
+    look=eye+aim; //this is the player position + the direction they're looking in
+    up=ngl::Vec3(0.0f,1.0f,0.0f);
+
+
+    m_cam->set(eye, look, up);
+
+    m_cam->setShape(60,(float)_w/_h,0.01,1);
+
+}
+
 void mainDraw::resize(int _w, int _h)
 {
+    m_text->setScreenSize(_w,_h);
     glViewport(0,0,_w,_h);
     // now set the camera size values as the screen size has changed
-    m_cam->setShape(60,(float)_w/_h,0.55,350);
+    m_cam->setShape(60,(float)_w/_h,0.01,1);
+    //m_text->setTransform(_w, _h);
 }
 
 void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
 {
-//    std::cout<<"handle event\n";
+    std::cout<<static_cast<int>(m_game)<<"\n";
 
-    lookAround(_event, _w, _h);
-    moveAround(_event);
+    if(m_game == 1)
+    {
+        switch(_event.button.button)
+        {
+            case SDL_BUTTON_LEFT:
+            {
+                m_game = GAME;
+                start_time = SDL_GetTicks();
+            }
+        }
+    }
+
+    if(m_game == 2)
+    {
+        SDL_ShowCursor(SDL_DISABLE);
+        lookAround(_event, _w, _h);
+        moveAround(_event);
+    }
+
+
 }
 
 void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
@@ -154,6 +182,7 @@ void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
         //Calculating the look vector and setting the camera movement
         look=eye+aim; //this is the player position + the direction they're looking in
         m_cam->set(eye, look, up);
+        m_light->setTransform(iv);
 
         //print lines for look debugging
 //        std::cout<<"eye: "<<eye.m_x<<", "<<eye.m_y<<", "<<eye.m_z<<"\n";
@@ -237,20 +266,72 @@ void mainDraw::updateEvent()
 
 void mainDraw::draw()
 {
-    // clear the screen and depth buffer
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if(m_game == 1)
+    {
+        m_text->setColour(1,1,1);
 
-    // grab an instance of the shader manager
-    ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-    (*shader)["Phong"]->use();
+        m_text->renderText(375, 200, "Maze Game");
 
-    // get the VBO instance and draw the built in teapot
-    //ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
-    // draw
-    //loadMatricesToShader();
-    //prim->draw("cube");
+        m_text->setColour(1,1,1);
 
-    m_mainmap->draw();
+        m_text->renderText(540, 400, "Play");
+
+    }
+    if(m_game == 2)
+    {
+        // clear the screen and depth buffer
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // grab an instance of the shader manager
+        ngl::ShaderLib *shader=ngl::ShaderLib::instance();
+        (*shader)["Phong"]->use();
+
+
+
+        // get the VBO instance and draw the built in teapot
+        //ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
+        // draw
+        //loadMatricesToShader();
+        //prim->draw("cube");
+
+        m_mainmap->draw();
+        time = SDL_GetTicks()-start_time;
+        min = time/60000;
+        sec = (time/1000)-(min*60);
+        m_text_small->setColour(1,1,1);
+        m_text_small->renderText(20, 20, std::to_string(min));
+        if(sec<=9)
+        {
+            m_text_small->renderText(38, 20, ":0"+std::to_string(sec));
+        }
+        else
+        {
+            m_text_small->renderText(38, 20, ":"+std::to_string(sec));
+        }
+    }
+
+    if(m_game == 3)
+    {
+        m_text->setColour(1,1,1);
+
+        m_text->renderText(375, 200, "Game Over!");
+
+        m_text->setColour(1,1,1);
+
+        m_text->renderText(100, 500, "Press Space to restart or ESC to quit");
+    }
+
+    if(m_game == 4)
+    {
+        m_text->setColour(1,1,1);
+
+        m_text->renderText(375, 200, "You're winner!");
+
+        m_text->setColour(1,1,1);
+
+        m_text->renderText(375, 200, "Time: "+std::to_string(min)+std::to_string(sec));
+    }
+
 }
 
 void mainDraw::loadMatricesToShader()
