@@ -12,6 +12,8 @@
 map::map(ngl::Camera* _cam, const std::string &_fname, float _x, float _z)
 {
     m_image.reset(new ngl::Image(_fname));
+    flip = 0;
+    lastSec = 0;
 
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
     // load a frag and vert shaders
@@ -114,36 +116,66 @@ void map::loadMatricesToShader(int texUnit, ngl::Vec2 scaleModTex)
 
 
 
-void map::draw()
+void map::draw(bool flip)
 {
+
+    float troll_scale;
+    float troll_pos;
+    float pot_scale;
+    float pot_pos;
+    float cube_scale;
+    if(flip)
+    {
+        troll_scale = -1;
+        troll_pos = 1.5;
+        pot_scale = 1;
+        pot_pos = 0.4;
+        cube_scale = -3;
+    }
+    else
+    {
+        troll_scale = 1;
+        troll_pos = 0.6;
+        pot_scale = -1;
+        pot_pos = 1.5;
+        cube_scale = 3;
+    }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glBindTexture(GL_TEXTURE_2D,m_textureFloor);
+    if(flip)
+    {
+        glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
 
-    ngl::VAOPrimitives::instance()->createTrianglePlane(
-                "ground", 80, 80, 10, 10, ngl::Vec3::up());
+        ngl::VAOPrimitives::instance()->createTrianglePlane(
+                    "ceiling", 80, 80, 10, 10, -ngl::Vec3::up());
 
-    tx.setPosition(0,0,0);
+        tx.setPosition(0,2,0);
+        loadMatricesToShader(1, ngl::Vec2(10,1));
+
+        ngl::VAOPrimitives::instance()->draw("ceiling");
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D,m_textureFloor);
+
+        ngl::VAOPrimitives::instance()->createTrianglePlane(
+                    "ground", 80, 80, 10, 10, ngl::Vec3::up());
+
+        tx.setPosition(0,0,0);
 
 
-    loadMatricesToShader(1, ngl::Vec2(10,10));
+        loadMatricesToShader(1, ngl::Vec2(10,10));
 
-    ngl::VAOPrimitives::instance()->draw("ground");
+        ngl::VAOPrimitives::instance()->draw("ground");
+    }
+
+
 
     //image mapping
     GLuint imageX=0;
     GLuint imageY=0;
     float halfX = (m_image->height()/2)+0.5;
     float halfZ = (m_image->width()/2)+0.5;
-
-
-
-
-
-
-
-
-
 
     for(float z=-halfZ;z<=halfZ; ++z)
     {
@@ -153,12 +185,12 @@ void map::draw()
 
             if(!FCompare(pixel.m_r,255) && !FCompare(pixel.m_g,255) && !FCompare(pixel.m_b,255))
             {
-            //std::cout<<m_image->getColour(x,z)<<'\n';
+
                 ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
                 glBindTexture(GL_TEXTURE_2D,m_textureWall);
 
                 tx.setPosition(-x,1,z);
-                tx.setScale(1, 3, 1);
+                tx.setScale(1, cube_scale, 1);
 
                 loadMatricesToShader(0, ngl::Vec2(1,5));
                 prim->draw("cube");
@@ -168,10 +200,9 @@ void map::draw()
             {
                 ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
                 glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
-                std::cout<<x<<"\n";
-                tx.setPosition(-x,0.75,z);
-                tx.setScale(1, 1, 1);
-                loadMatricesToShader(0, ngl::Vec2(1,5));
+                tx.setPosition(-x,troll_pos,z);
+                tx.setScale(1, troll_scale, 1);
+                loadMatricesToShader(1, ngl::Vec2(1,5));
                 prim->draw("troll");
             }
 
@@ -179,11 +210,20 @@ void map::draw()
             {
                 ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
                 glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
-                std::cout<<x<<"\n";
-                tx.setPosition(-x,1.5,z);
-                tx.setScale(1, -1, 1);
+                tx.setPosition(-x,pot_pos,z);
+                tx.setScale(1, pot_scale, 1);
                 loadMatricesToShader(0, ngl::Vec2(1,5));
                 prim->draw("teapot");
+            }
+            if(FCompare(pixel.m_r, 255) && FCompare(pixel.m_g,0) && FCompare(pixel.m_b,0))
+            {
+                ngl::VAOPrimitives::instance()->createSphere(
+                            "sphere", 0.5, 10);
+                glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
+                tx.setPosition(-x,1,z);
+                tx.setScale(1, 1, 1);
+                loadMatricesToShader(0, ngl::Vec2(1,5));
+                ngl::VAOPrimitives::instance()->draw("sphere");
             }
 
             ++imageX;
@@ -193,15 +233,33 @@ void map::draw()
         ++imageY;
     }//endZ
 
-    glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
+    if(flip)
+    {
+        glBindTexture(GL_TEXTURE_2D,m_textureFloor);
 
-    ngl::VAOPrimitives::instance()->createTrianglePlane(
-                "ceiling", 80, 80, 10, 10, -ngl::Vec3::up());
+        ngl::VAOPrimitives::instance()->createTrianglePlane(
+                    "ground", 80, 80, 10, 10, ngl::Vec3::up());
 
-    tx.setPosition(0,2,0);
-    loadMatricesToShader(2, ngl::Vec2(10,1));
+        tx.setPosition(0,0,0);
 
-    ngl::VAOPrimitives::instance()->draw("ceiling");
+
+        loadMatricesToShader(2, ngl::Vec2(10,10));
+
+        ngl::VAOPrimitives::instance()->draw("ground");
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
+        ngl::VAOPrimitives::instance()->createTrianglePlane(
+                    "ceiling", 80, 80, 10, 10, -ngl::Vec3::up());
+
+        tx.setPosition(0,2,0);
+        loadMatricesToShader(2, ngl::Vec2(10,1));
+
+        ngl::VAOPrimitives::instance()->draw("ceiling");
+    }
+
+
 
 
 //    ngl::VAOPrimitives::instance()->draw("teapot");
@@ -214,12 +272,10 @@ bool map::collision(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
     //Bottom left of image
     GLuint m_imageX = 0;
     GLuint m_imageY = 0;
-    float m_halfX = ((float)m_image->height())/2;
-    float m_halfZ = ((float)m_image->width())/2;
+
 
     //aim vector resize to map proportions
     _aim = _aim*_rad;
-    ngl::Vec3 bound = _pos+_aim;
 
     ngl::Vec2 test = ngl::Vec2(-_pos.m_x,_pos.m_z);
     auto aimVec = ngl::Vec2(-_aim.m_x,_aim.m_z);
@@ -240,18 +296,15 @@ bool map::collision(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
 
 }
 
-bool map::collision_enemies(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
+bool map::collision_enemies(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad, bool flip)
 {
     //Bottom left of image
     bool dead = 0;
     GLuint m_imageX = 0;
     GLuint m_imageY = 0;
-    float m_halfX = ((float)m_image->height())/2;
-    float m_halfZ = ((float)m_image->width())/2;
 
     //aim vector resize to map proportions
     _aim = _aim*_rad;
-    ngl::Vec3 bound = _pos+_aim;
 
     ngl::Vec2 test = ngl::Vec2(-_pos.m_x,_pos.m_z);
     auto aimVec = ngl::Vec2(-_aim.m_x,_aim.m_z);
@@ -264,9 +317,14 @@ bool map::collision_enemies(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
     m_imageY=floor(test.m_y);
     auto px = m_image->getColour(m_imageX,m_imageY);
 
-
-    if(FCompare(px.m_r, 255) && FCompare(px.m_g, 255) && FCompare(px.m_b, 0)){std::cout<<"dead!"; dead = 1;}
-    if(FCompare(px.m_r, 0) && FCompare(px.m_g, 255) && FCompare(px.m_b, 0)){std::cout<<"dead!"; dead = 1;}
+    if(flip)
+    {
+        if(FCompare(px.m_r, 255) && FCompare(px.m_g, 255) && FCompare(px.m_b, 0)){std::cout<<"dead!"; dead = 1;}
+    }
+    else
+    {
+        if(FCompare(px.m_r, 0) && FCompare(px.m_g, 255) && FCompare(px.m_b, 0)){std::cout<<"dead!"; dead = 1;}
+    }
 
     return dead;
     return 0; //Turns off collision, debug
@@ -279,12 +337,9 @@ bool map::collision_win(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
     bool win = 0;
     GLuint m_imageX = 0;
     GLuint m_imageY = 0;
-    float m_halfX = ((float)m_image->height())/2;
-    float m_halfZ = ((float)m_image->width())/2;
 
     //aim vector resize to map proportions
     _aim = _aim*_rad;
-    ngl::Vec3 bound = _pos+_aim;
 
     ngl::Vec2 test = ngl::Vec2(-_pos.m_x,_pos.m_z);
     auto aimVec = ngl::Vec2(-_aim.m_x,_aim.m_z);
@@ -301,6 +356,37 @@ bool map::collision_win(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
     if(FCompare(px.m_r, 0) && FCompare(px.m_b, 255)){std::cout<<"win!"; win = 1;}
 
     return win;
+    return 0; //Turns off collision, debug
+
+}
+
+bool map::collision_sphere(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad, int sec)
+{
+    //Bottom left of image
+    GLuint m_imageX = 0;
+    GLuint m_imageY = 0;
+
+    //aim vector resize to map proportions
+    _aim = _aim*_rad;
+
+    ngl::Vec2 test = ngl::Vec2(-_pos.m_x,_pos.m_z);
+    auto aimVec = ngl::Vec2(-_aim.m_x,_aim.m_z);
+    aimVec.normalize();
+
+    test += ngl::Vec2(40,40);
+    test += aimVec*ngl::Vec2(_rad,_rad);
+
+    m_imageX=floor(test.m_x);
+    m_imageY=floor(test.m_y);
+    auto px = m_image->getColour(m_imageX,m_imageY);
+
+    if(sec-lastSec > 5)
+    {
+        if(FCompare(px.m_r, 255) && FCompare(px.m_b, 0) && FCompare(px.m_g,0)){std::cout<<"flip!"; flip = !flip;}
+        lastSec = sec;
+    }
+
+    return flip;
     return 0; //Turns off collision, debug
 
 }

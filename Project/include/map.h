@@ -13,9 +13,13 @@ class map
         ngl::Colour pixel;
         float lastX;
         float lastZ;
+
+        int lastSec;
         GLuint m_textureWall;
         GLuint m_textureFloor;
         GLuint m_textureCeiling;
+
+        bool flip;
 
         ngl::Transformation tx;
 
@@ -30,17 +34,15 @@ class map
     public:
         map(ngl::Camera* _cam, const std::string &_fname, float _x, float _z);
         ~map();
-        void flipMap();
         void drawFloor();
-        void drawWalls(float _x, float _z);
-        void drawCeiling();
-        void draw();
+        void draw(bool flip);
         void loadMatricesToShader(int texUnit, ngl::Vec2 scaleModTex);
         ngl::Vec3 spawnPos();
 
         bool collision(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad);
-        bool collision_enemies(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad);
+        bool collision_enemies(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad, bool flip);
         bool collision_win(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad);
+        bool collision_sphere(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad, int sec);
         inline ngl::Image *getImage(){return m_image.get();}
 
 };

@@ -60,6 +60,7 @@ class mainDraw
 
     bool m_moving;
     bool spawn;
+    bool flip;
 
     std::string fname;
 
@@ -77,6 +78,7 @@ class mainDraw
     int min;
     int sec;
     int start_time;
+    int globalSec;
 
     double time;
 

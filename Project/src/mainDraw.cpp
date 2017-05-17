@@ -17,43 +17,8 @@ mainDraw::mainDraw(int _w, int _h)
         m_moving = false;
         spawn = false;
         start_time = 0;
-
-        glClearColor(0.4f, 0.4f, 0.4f, 1.0f);			   // Grey Background
-        // enable depth testing for drawing
-        glEnable(GL_DEPTH_TEST);
-        // now to load the shader and set the values
-        // grab an instance of shader manager
-        ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-        // we are creating a shader called Phong
-        shader->createShaderProgram("Phong");
-        // now we are going to create empty shaders for Frag and Vert
-        shader->attachShader("PhongVertex",ngl::ShaderType::VERTEX);
-        shader->attachShader("PhongFragment",ngl::ShaderType::FRAGMENT);
-        // attach the source
-        shader->loadShaderSource("PhongVertex","shaders/PhongVertex.glsl");
-        shader->loadShaderSource("PhongFragment","shaders/PhongFragment.glsl");
-        // compile the shaders
-        shader->compileShader("PhongVertex");
-        shader->compileShader("PhongFragment");
-        // add them to the program
-        shader->attachShaderToProgram("Phong","PhongVertex");
-        shader->attachShaderToProgram("Phong","PhongFragment");
-        // now bind the shader attributes for most NGL primitives we use the following
-        // layout attribute 0 is the vertex data (x,y,z)
-        shader->bindAttribute("Phong",0,"inVert");
-        // attribute 1 is the UV data u,v (if present)
-        shader->bindAttribute("Phong",1,"inUV");
-        // attribute 2 are the normals x,y,z
-        shader->bindAttribute("Phong",2,"inNormal");
-
-        // now we have associated this data we can link the shader
-        shader->linkProgramObject("Phong");
-        // and make it active ready to load values
-        (*shader)["Phong"]->use();
-        // the shader will use the currently active material and light0 so set them
-        ngl::Material m(ngl::STDMAT::GOLD);
-        // load our material values to the shader into the structure material (see Vertex shader)
-        m.loadToShader("material");
+        globalSec = 0;
+        flip = 0;
 
         m_text.reset(new Text("fonts/arial.ttf", 100));
         m_text->setColour(1.0,0.0,0.0);
@@ -98,7 +63,7 @@ mainDraw::~mainDraw()
 void mainDraw::setCamera(ngl::Camera *m_cam, int _w, int _h)
 {
     // FIRST PERSON CAMERA
-    eye= ngl::Vec3(36.5f, 1.0f, 36.5f);//m_mainmap->spawnPos();  //this will be the player position
+    eye= ngl::Vec3(36.5f, 1.0f, 36.0f);//m_mainmap->spawnPos();  //this will be the player position
     aim = ngl::Vec3(0.0f,0.0f,1.0f);
     right=ngl::Vec3(0.0f,0.0f,0.0f);
     look=eye+aim; //this is the player position + the direction they're looking in
@@ -248,7 +213,7 @@ void mainDraw::moveAround(SDL_Event& _event)
                 look=eye+aim;
                 m_cam->set(eye, look, up);
             }
-            if(m_mainmap->collision_enemies(eye,aim,0.5))
+            if(m_mainmap->collision_enemies(eye,aim,0.5, flip))
             {
                 m_game = GAMEOVER;
             }
@@ -256,6 +221,8 @@ void mainDraw::moveAround(SDL_Event& _event)
             {
                 m_game = EXIT;
             }
+            flip = m_mainmap->collision_sphere(eye,aim,0.5, globalSec);
+
             break;
 
 
@@ -268,7 +235,7 @@ void mainDraw::moveAround(SDL_Event& _event)
                 look=eye+aim;
                 m_cam->set(eye, look, up);
             }
-            if(m_mainmap->collision_enemies(eye,-aim,0.5))
+            if(m_mainmap->collision_enemies(eye,-aim,0.5, flip))
             {
                 m_game = GAMEOVER;
             }
@@ -276,6 +243,8 @@ void mainDraw::moveAround(SDL_Event& _event)
             {
                 m_game = EXIT;
             }
+            flip = m_mainmap->collision_sphere(eye,-aim,0.5, globalSec);
+
             break;
 
         case SDLK_d:
@@ -285,9 +254,8 @@ void mainDraw::moveAround(SDL_Event& _event)
                 eye += right*0.1;
                 look=eye+aim;
                 m_cam->set(eye, look, up);
-                break;
             }
-            if(m_mainmap->collision_enemies(eye,aim,0.5))
+            if(m_mainmap->collision_enemies(eye,aim,0.5, flip))
             {
                 m_game = GAMEOVER;
             }
@@ -295,6 +263,9 @@ void mainDraw::moveAround(SDL_Event& _event)
             {
                 m_game = EXIT;
             }
+            flip = m_mainmap->collision_sphere(eye,aim,0.5, globalSec);
+            break;
+
 
 
         case SDLK_a:
@@ -304,9 +275,8 @@ void mainDraw::moveAround(SDL_Event& _event)
                 eye -= right*0.1;
                 look=eye+aim;
                 m_cam->set(eye, look, up);
-                break;
             }
-            if(m_mainmap->collision_enemies(eye,aim,0.5))
+            if(m_mainmap->collision_enemies(eye,aim,0.5, flip))
             {
                 m_game = GAMEOVER;
             }
@@ -314,6 +284,9 @@ void mainDraw::moveAround(SDL_Event& _event)
             {
                 m_game = EXIT;
             }
+            flip = m_mainmap->collision_sphere(eye,aim,0.5, globalSec);
+            break;
+
         }
 //        std::cout<<"eye: "<<eye.m_x<<", "<<eye.m_y<<", "<<eye.m_z<<"\n";
 
@@ -344,10 +317,11 @@ void mainDraw::draw()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        m_mainmap->draw();
+        m_mainmap->draw(flip);
         time = SDL_GetTicks()-start_time;
         min = time/60000;
         sec = (time/1000)-(min*60);
+        globalSec = (time/1000);
         m_text_small->setColour(1,1,1);
         if(min<=9)
         {
@@ -373,9 +347,9 @@ void mainDraw::draw()
 
         m_text->renderText(375, 200, "Game Over!");
 
-        m_text->setColour(1,1,1);
+        m_text_small->setColour(1,1,1);
 
-        m_text->renderText(100, 500, "Press Space to restart or ESC to quit");
+        m_text_small->renderText(420, 500, "Press Space to restart or ESC to quit");
     }
 
     if(m_game == 4)
@@ -387,6 +361,10 @@ void mainDraw::draw()
         m_text->setColour(1,1,1);
 
         m_text->renderText(375, 400, "Time: "+std::to_string(min)+":"+std::to_string(sec));
+
+        m_text_small->setColour(1,1,1);
+
+        m_text_small->renderText(500, 600, "Press Space to restart or ESC to quit");
     }
 
 }
