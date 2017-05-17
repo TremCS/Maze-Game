@@ -61,6 +61,8 @@ class mainDraw
     bool m_moving;
     bool spawn;
 
+    std::string fname;
+
 
     GAMESTATES m_game;
     std::unique_ptr<Text> m_text;

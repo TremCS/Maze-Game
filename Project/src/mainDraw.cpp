@@ -74,7 +74,7 @@ mainDraw::mainDraw(int _w, int _h)
 
         m_game = MENU;
         m_cam= new ngl::Camera();
-        auto fname=std::string("maps/Maze.png");
+        fname=std::string("maps/Maze.png");
         m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
         setCamera(m_cam, _w, _h);
 
@@ -91,13 +91,14 @@ mainDraw::~mainDraw()
     std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
     delete m_light;
     delete m_cam;
+    delete m_mainmap;
     //delete m_mainmap;
 }
 
 void mainDraw::setCamera(ngl::Camera *m_cam, int _w, int _h)
 {
     // FIRST PERSON CAMERA
-    eye= ngl::Vec3(-36.5f, 1.0f, 36.5f);//m_mainmap->spawnPos();  //this will be the player position
+    eye= ngl::Vec3(36.5f, 1.0f, 36.5f);//m_mainmap->spawnPos();  //this will be the player position
     aim = ngl::Vec3(0.0f,0.0f,1.0f);
     right=ngl::Vec3(0.0f,0.0f,0.0f);
     look=eye+aim; //this is the player position + the direction they're looking in
@@ -125,6 +126,7 @@ void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
 
     if(m_game == 1)
     {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         switch(_event.button.button)
         {
             case SDL_BUTTON_LEFT:
@@ -140,6 +142,34 @@ void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
         SDL_ShowCursor(SDL_DISABLE);
         lookAround(_event, _w, _h);
         moveAround(_event);
+    }
+
+    if(m_game == 3)
+    {
+        switch(_event.key.keysym.sym)
+        {
+            case SDLK_SPACE:
+            {
+                delete m_mainmap;
+                m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
+                setCamera(m_cam, _w, _h);
+                m_game = MENU;
+            }
+        }
+    }
+
+    if(m_game == 4)
+    {
+        switch(_event.key.keysym.sym)
+        {
+            case SDLK_SPACE:
+            {
+                delete m_mainmap;
+                m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
+                setCamera(m_cam, _w, _h);
+                m_game = MENU;
+            }
+        }
     }
 
 
@@ -218,6 +248,14 @@ void mainDraw::moveAround(SDL_Event& _event)
                 look=eye+aim;
                 m_cam->set(eye, look, up);
             }
+            if(m_mainmap->collision_enemies(eye,aim,0.5))
+            {
+                m_game = GAMEOVER;
+            }
+            if(m_mainmap->collision_win(eye,aim,0.5))
+            {
+                m_game = EXIT;
+            }
             break;
 
 
@@ -230,6 +268,14 @@ void mainDraw::moveAround(SDL_Event& _event)
                 look=eye+aim;
                 m_cam->set(eye, look, up);
             }
+            if(m_mainmap->collision_enemies(eye,-aim,0.5))
+            {
+                m_game = GAMEOVER;
+            }
+            if(m_mainmap->collision_win(eye,-aim,0.5))
+            {
+                m_game = EXIT;
+            }
             break;
 
         case SDLK_d:
@@ -240,6 +286,14 @@ void mainDraw::moveAround(SDL_Event& _event)
                 look=eye+aim;
                 m_cam->set(eye, look, up);
                 break;
+            }
+            if(m_mainmap->collision_enemies(eye,aim,0.5))
+            {
+                m_game = GAMEOVER;
+            }
+            if(m_mainmap->collision_win(eye,aim,0.5))
+            {
+                m_game = EXIT;
             }
 
 
@@ -252,6 +306,14 @@ void mainDraw::moveAround(SDL_Event& _event)
                 m_cam->set(eye, look, up);
                 break;
             }
+            if(m_mainmap->collision_enemies(eye,aim,0.5))
+            {
+                m_game = GAMEOVER;
+            }
+            if(m_mainmap->collision_win(eye,aim,0.5))
+            {
+                m_game = EXIT;
+            }
         }
 //        std::cout<<"eye: "<<eye.m_x<<", "<<eye.m_y<<", "<<eye.m_z<<"\n";
 
@@ -261,7 +323,6 @@ void mainDraw::moveAround(SDL_Event& _event)
 void mainDraw::updateEvent()
 {
 //    std::cout<<"update event\n";
-    m_mainmap->updateMap();
 }
 
 void mainDraw::draw()
@@ -270,7 +331,7 @@ void mainDraw::draw()
     {
         m_text->setColour(1,1,1);
 
-        m_text->renderText(375, 200, "Maze Game");
+        m_text->renderText(200, 200, "Curse of the Teapots");
 
         m_text->setColour(1,1,1);
 
@@ -282,24 +343,20 @@ void mainDraw::draw()
         // clear the screen and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // grab an instance of the shader manager
-        ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-        (*shader)["Phong"]->use();
-
-
-
-        // get the VBO instance and draw the built in teapot
-        //ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
-        // draw
-        //loadMatricesToShader();
-        //prim->draw("cube");
 
         m_mainmap->draw();
         time = SDL_GetTicks()-start_time;
         min = time/60000;
         sec = (time/1000)-(min*60);
         m_text_small->setColour(1,1,1);
-        m_text_small->renderText(20, 20, std::to_string(min));
+        if(min<=9)
+        {
+            m_text_small->renderText(20, 20, std::to_string(min));
+        }
+        else
+        {
+            m_text_small->renderText(2, 20, std::to_string(min));
+        }
         if(sec<=9)
         {
             m_text_small->renderText(38, 20, ":0"+std::to_string(sec));
@@ -329,7 +386,7 @@ void mainDraw::draw()
 
         m_text->setColour(1,1,1);
 
-        m_text->renderText(375, 200, "Time: "+std::to_string(min)+std::to_string(sec));
+        m_text->renderText(375, 400, "Time: "+std::to_string(min)+":"+std::to_string(sec));
     }
 
 }

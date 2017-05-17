@@ -3,7 +3,6 @@
 #include <iostream>
 #include "mainDraw.h"
 #include "map.h"
-#include "menu.h"
 #include <ngl/NGLInit.h>
 #include <SDL_ttf.h>
 
