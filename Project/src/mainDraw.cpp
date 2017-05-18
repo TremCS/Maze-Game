@@ -16,6 +16,7 @@ mainDraw::mainDraw(int _w, int _h)
         m_rotation=(0.0f);
         m_moving = false;
         spawn = false;
+        instructions = false;
         start_time = 0;
         globalSec = 0;
         flip = 0;
@@ -39,9 +40,8 @@ mainDraw::mainDraw(int _w, int _h)
 
         m_game = MENU;
         m_cam= new ngl::Camera();
-        fname=std::string("maps/Maze.png");
-        m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
-        setCamera(m_cam, _w, _h);
+        setCameraStartup(m_cam, _w, _h);
+        m_map_startup = new map(m_cam, fname, eye.m_x, eye.m_z);
 
         ngl::Mat4 iv=m_cam->getViewMatrix();
         iv.transpose();
@@ -76,6 +76,20 @@ void mainDraw::setCamera(ngl::Camera *m_cam, int _w, int _h)
 
 }
 
+void mainDraw::setCameraStartup(ngl::Camera *m_cam, int _w, int _h)
+{
+    eye= ngl::Vec3(36.5f, 1.0f, 36.0f);//m_mainmap->spawnPos();  //this will be the player position
+    aim = ngl::Vec3(0.0f,0.0f,-1.0f);
+    right=ngl::Vec3(0.0f,0.0f,0.0f);
+    look=eye+aim; //this is the player position + the direction they're looking in
+    up=ngl::Vec3(0.0f,1.0f,0.0f);
+
+
+    m_cam->set(eye, look, up);
+
+    m_cam->setShape(60,(float)_w/_h,0.01,1);
+}
+
 void mainDraw::resize(int _w, int _h)
 {
     m_text->setScreenSize(_w,_h);
@@ -92,12 +106,25 @@ void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
     if(m_game == 1)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        switch(_event.key.keysym.sym)
+        {
+            case SDLK_SPACE:
+            {
+                instructions = 1;
+            }
+        }
+
         switch(_event.button.button)
         {
             case SDL_BUTTON_LEFT:
             {
+                delete m_map_startup;
+                fname=std::string("maps/Maze.png");
+                m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
+                setCamera(m_cam, _w, _h);
                 m_game = GAME;
                 start_time = SDL_GetTicks();
+                instructions = 0;
             }
         }
     }
@@ -116,8 +143,8 @@ void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
             case SDLK_SPACE:
             {
                 delete m_mainmap;
-                m_mainmap = new map(m_cam, fname, eye.m_x, eye.m_z);
-                setCamera(m_cam, _w, _h);
+                m_map_startup = new map(m_cam, fname, eye.m_x, eye.m_z);
+                setCameraStartup(m_cam, _w, _h);
                 m_game = MENU;
             }
         }
@@ -138,6 +165,14 @@ void mainDraw::handleEvent(SDL_Event& _event, int _w, int _h)
     }
 
 
+}
+
+void mainDraw::handleEventStartup()
+{
+    if(m_game == 1)
+    {
+        m_map_startup->drawStart();
+    }
 }
 
 void mainDraw::lookAround(SDL_Event& _event, int _w, int _h)
@@ -302,13 +337,25 @@ void mainDraw::draw()
 {
     if(m_game == 1)
     {
-        m_text->setColour(1,1,1);
+        if(!instructions)
+        {
+            m_text->setColour(1,1,1);
 
-        m_text->renderText(200, 200, "Curse of the Teapots");
+            m_text->renderText(150, 175, "Curse of the Teapots");
 
-        m_text->setColour(1,1,1);
+            m_text_small->setColour(1,1,1);
 
-        m_text->renderText(540, 400, "Play");
+            m_text_small->renderText(400, 600, "Click to play, or Space for instructions");
+        }
+        else
+        {
+            m_text_small->setColour(1,1,1);
+
+            m_text_small->renderText(30, 200, "Don't hit these guys if you're on the ceiling!");
+            m_text_small->renderText(800, 230, "Or these guys on the floor!");
+            m_text_small->renderText(500, 500, "Hit these to flip the map!");
+            m_text_small->renderText(500, 600, "Good luck!  Click to play");
+        }
 
     }
     if(m_game == 2)

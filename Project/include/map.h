@@ -13,11 +13,14 @@ class map
         ngl::Colour pixel;
         float lastX;
         float lastZ;
+        float startup_rotation;
 
         int lastSec;
         GLuint m_textureWall;
         GLuint m_textureFloor;
         GLuint m_textureCeiling;
+        GLuint m_textureMonster;
+        GLuint m_textureSphere;
 
         bool flip;
 
@@ -26,6 +29,8 @@ class map
         std::unique_ptr<ngl::Image>m_image_wall;
         std::unique_ptr<ngl::Image>m_image_floor;
         std::unique_ptr<ngl::Image>m_image_ceiling;
+        std::unique_ptr<ngl::Image>m_image_monster;
+        std::unique_ptr<ngl::Image>m_image_sphere;
 
         ngl::Vec3 startPos;
         ngl::Mat4 m_mouseGlobalTX;
@@ -36,6 +41,7 @@ class map
         ~map();
         void drawFloor();
         void draw(bool flip);
+        void drawStart();
         void loadMatricesToShader(int texUnit, ngl::Vec2 scaleModTex);
         ngl::Vec3 spawnPos();
 

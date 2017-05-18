@@ -20,6 +20,8 @@ map::map(ngl::Camera* _cam, const std::string &_fname, float _x, float _z)
 
     shader->createShaderProgram("TextureShader");
 
+    startup_rotation = 0;
+
     shader->attachShader("TextureVertex",ngl::ShaderType::VERTEX);
     shader->attachShader("TextureFragment",ngl::ShaderType::FRAGMENT);
     shader->loadShaderSource("TextureVertex","shaders/TextureVert.glsl");
@@ -70,17 +72,29 @@ map::map(ngl::Camera* _cam, const std::string &_fname, float _x, float _z)
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,m_image_ceiling->getPixels());
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    m_image_monster.reset(new ngl::Image("img/monster.png"));
 
-//    ngl::Texture texture("img/wall.png");
-//    m_textureWall=texture.setTextureGL();
+    glGenTextures(1,&m_textureMonster);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D,m_textureMonster);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,m_image_monster->getPixels());
+    glGenerateMipmap(GL_TEXTURE_2D);
 
-//    ngl::Texture texture2("img/floor.png");
-//    m_textureFloor=texture2.setTextureGL();
+    m_image_sphere.reset(new ngl::Image("img/sphere.png"));
 
-//    ngl::Texture texture3("img/ceiling.png");
-//    m_textureCeiling=texture3.setTextureGL();
-
-
+    glGenTextures(1,&m_textureSphere);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D,m_textureSphere);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,256,256,0,GL_RGB,GL_UNSIGNED_BYTE,m_image_sphere->getPixels());
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     lastX = _x;
     lastZ = _z;
@@ -199,30 +213,30 @@ void map::draw(bool flip)
             if(FCompare(pixel.m_r, 0) && FCompare(pixel.m_g,255) && FCompare(pixel.m_b,0))
             {
                 ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
-                glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
+                glBindTexture(GL_TEXTURE_2D,m_textureMonster);
                 tx.setPosition(-x,troll_pos,z);
                 tx.setScale(1, troll_scale, 1);
-                loadMatricesToShader(1, ngl::Vec2(1,5));
+                loadMatricesToShader(3, ngl::Vec2(1,1));
                 prim->draw("troll");
             }
 
             if(FCompare(pixel.m_r, 255) && FCompare(pixel.m_g,255) && FCompare(pixel.m_b,0))
             {
                 ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
-                glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
+                glBindTexture(GL_TEXTURE_2D,m_textureMonster);
                 tx.setPosition(-x,pot_pos,z);
                 tx.setScale(1, pot_scale, 1);
-                loadMatricesToShader(0, ngl::Vec2(1,5));
+                loadMatricesToShader(3, ngl::Vec2(1,1));
                 prim->draw("teapot");
             }
             if(FCompare(pixel.m_r, 255) && FCompare(pixel.m_g,0) && FCompare(pixel.m_b,0))
             {
                 ngl::VAOPrimitives::instance()->createSphere(
                             "sphere", 0.5, 10);
-                glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
+                glBindTexture(GL_TEXTURE_2D,m_textureSphere);
                 tx.setPosition(-x,1,z);
                 tx.setScale(1, 1, 1);
-                loadMatricesToShader(0, ngl::Vec2(1,5));
+                loadMatricesToShader(4, ngl::Vec2(1,1));
                 ngl::VAOPrimitives::instance()->draw("sphere");
             }
 
@@ -266,10 +280,82 @@ void map::draw(bool flip)
 
 }
 
+void map::drawStart()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glBindTexture(GL_TEXTURE_2D,m_textureFloor);
+
+    ngl::VAOPrimitives::instance()->createTrianglePlane(
+                "ground", 10, 10, 10, 10, ngl::Vec3::up());
+
+    tx.setPosition(36.5,0,37);
+    tx.setRotation(0, 0, 0);
+
+
+    loadMatricesToShader(1, ngl::Vec2(1,1));
+
+    ngl::VAOPrimitives::instance()->draw("ground");
+
+    for(float x = 30; x<43; x++ )
+    {
+        ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
+        glBindTexture(GL_TEXTURE_2D,m_textureWall);
+
+        tx.setPosition(x,1, 32.5);
+        tx.setScale(1, 3, 1);
+        tx.setRotation(0, 0, 0);
+
+        loadMatricesToShader(0, ngl::Vec2(1,5));
+        prim->draw("cube");
+    }
+
+    glBindTexture(GL_TEXTURE_2D,m_textureCeiling);
+    ngl::VAOPrimitives::instance()->createTrianglePlane(
+                "ceiling", 10, 10, 10, 10, -ngl::Vec3::up());
+
+    tx.setPosition(36.5,2,37);
+    tx.setRotation(0, 0, 0);
+    loadMatricesToShader(2, ngl::Vec2(1,1));
+
+    ngl::VAOPrimitives::instance()->draw("ceiling");
+
+    ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
+    glBindTexture(GL_TEXTURE_2D,m_textureMonster);
+    tx.setPosition(34.5,0.5,34);
+    tx.setScale(0.8, 0.8, 0.8);
+    tx.setRotation(0, startup_rotation, 0);
+    loadMatricesToShader(3, ngl::Vec2(1,1));
+    prim->draw("teapot");
+
+
+    glBindTexture(GL_TEXTURE_2D,m_textureMonster);
+    tx.setPosition(37.7,0.8,35);
+    tx.setScale(1, 1, 1);
+    tx.setRotation(0, startup_rotation*1.3, 0);
+    loadMatricesToShader(3, ngl::Vec2(1,1));
+    prim->draw("troll");
+
+
+    ngl::VAOPrimitives::instance()->createSphere(
+                "sphere", 0.5, 10);
+    glBindTexture(GL_TEXTURE_2D,m_textureSphere);
+    tx.setPosition(36.5,0.8,35);
+    tx.setScale(1, 1, 1);
+    tx.setRotation(0, -startup_rotation, 0);
+    loadMatricesToShader(4, ngl::Vec2(1,1));
+    ngl::VAOPrimitives::instance()->draw("sphere");
+
+
+    startup_rotation = startup_rotation + 0.5;
+
+
+}
 
 bool map::collision(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
 {
     //Bottom left of image
+    bool collision = 0;
     GLuint m_imageX = 0;
     GLuint m_imageY = 0;
 
@@ -289,10 +375,10 @@ bool map::collision(ngl::Vec3 _pos, ngl::Vec3 _aim, float _rad)
     auto px = m_image->getColour(m_imageX,m_imageY);
 
 
-    if(!px.m_r){std::cout<<"can't go there\n";}
+    if(FCompare(px.m_r,0) && FCompare(px.m_g,0) && FCompare(px.m_b,0)){std::cout<<"can't go there\n"; collision = 1;}
 
-//    return !px.m_r;
-    return 0; //Turns off collision, debug
+    return collision;
+//    return 0; //Turns off collision, for testing
 
 }
 

@@ -121,6 +121,8 @@ int main(int argc, char * argv[])
         //UPDATE HANDLING
         scene->updateEvent();
 
+        scene->handleEventStartup();
+
         //DRAW HANDLING
         scene->draw();
 
